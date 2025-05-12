@@ -14,15 +14,26 @@ This is a frontend project built with **React** and **Vite** for the **Health La
 
 ```bash
 .
-├── public/           # Static assets
+├── node_modules/
+├── public/                # Aset statis
 ├── src/
-│   ├── assets/       # Images, icons, etc.
-│   ├── components/   # Reusable React components
-│   ├── pages/        # Main page components
-│   ├── services/     # API or sensor communication logic
-│   ├── App.jsx
-│   └── main.jsx
+│   ├── components/        # Komponen UI reusable
+│   │   ├── Header.tsx
+│   │   ├── SensorChart.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── SummaryCard.tsx
+│   ├── context/           # React context untuk tema/global state
+│   │   └── ThemeContext.tsx
+│   ├── pages/             # Halaman utama aplikasi
+│   │   └── Dashboard.tsx
+│   ├── utils/             # Utilitas/mocking data
+│   │   └── mockData.ts
+│   ├── App.tsx            # Root component
+│   ├── index.css          # Styling global
+│   ├── main.tsx           # Entry point aplikasi
+│   └── vite-env.d.ts      # Deklarasi env Vite (TypeScript)
 ├── .gitignore
-├── index.html
-├── package.json
-└── vite.config.js
+├── index.html             # HTML utama
+├── package.json           # Konfigurasi npm
+├── vite.config.js         # Konfigurasi build Vite
+└── eslint.config.js       # Konfigurasi linting
