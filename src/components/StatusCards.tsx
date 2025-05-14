@@ -14,7 +14,7 @@ const StatusCards: React.FC<StatusCardsProps> = ({ counts }) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full">
       {/* All Sensors */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-        <h3 className="text-gray-500 dark:text-gray-300 text-sm font-medium mb-2">All Sensors</h3>
+        <h3 className="text-gray-500 dark:text-gray-300 text-sm font-medium mb-2">Selected Sensors</h3>
         <p className="text-3xl font-bold text-gray-800 dark:text-white">{counts.all}</p>
       </div>
 

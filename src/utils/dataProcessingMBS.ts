@@ -1,14 +1,16 @@
-interface SensorData {
+export interface SensorData {
   name: string;
   displayName: string;
   value: number;
   unit: string;
   status: 'normal' | 'warning' | 'critical';
   change: number;
-  chartData: number[];
+  chartData: { x: Date; y: number }[];
 }
 
-export const processSensorData = (data: Record<string, number[]>): Record<string, SensorData> => {
+export const processSensorData = (
+  data: Record<string, { x: Date; y: number }[]>
+): Record<string, SensorData> => {
   const result: Record<string, SensorData> = {};
 
   const sensorConfig: Record<string, { displayName: string; unit: string }> = {
@@ -27,28 +29,22 @@ export const processSensorData = (data: Record<string, number[]>): Record<string
     'EEG CH13': { displayName: 'EEG Channel 13', unit: 'μV' },
     'EEG CH14': { displayName: 'EEG Channel 14', unit: 'μV' },
     'EEG CH15': { displayName: 'EEG Channel 15', unit: 'μV' },
-    'EEG CH16': { displayName: 'EEG Channel 16', unit: 'μV' }
+    'EEG CH16': { displayName: 'EEG Channel 16', unit: 'μV' },
   };
 
   Object.entries(data).forEach(([key, values]) => {
-    let value: number;
+    const validValues = values.filter(v => v && typeof v.y === "number");
+    const ys = validValues.map((v) => v.y);
 
-    if (key === 'ECG' || key.includes('EEG')) {
-      const lastValues = values.slice(-10);
-      value = lastValues.reduce((sum, val) => sum + val, 0) / lastValues.length;
-    } else {
-      value = values[values.length - 1] || 0;
-    }
+    const value =
+      key === "ECG" || key.includes("EEG")
+        ? ys.slice(-10).reduce((sum, v) => sum + v, 0) / Math.max(ys.slice(-10).length, 1)
+        : ys.length > 0 ? ys[ys.length - 1] : 0;
 
-    // Calculate change using last two values (if available)
-    let change = 0;
-    if (values.length >= 2) {
-      const latest = values[values.length - 1];
-      const prev = values[values.length - 2];
-      change = ((latest - prev) / (prev || 1)) * 100;
-    }
+    const latest = ys[ys.length - 1] ?? 0;
+    const previous = ys[ys.length - 2] ?? latest;
+    const change = ((latest - previous) / (previous || 1)) * 100;
 
-    // Determine sensor status
     let status: 'normal' | 'warning' | 'critical' = 'normal';
     switch (key) {
       case 'ECG':
@@ -71,8 +67,6 @@ export const processSensorData = (data: Record<string, number[]>): Record<string
         if (value > 160) status = 'critical';
         else if (value > 140) status = 'warning';
         break;
-      default:
-        status = 'normal'; // EEG, EMG, etc., no random status
     }
 
     const config = sensorConfig[key] || { displayName: key, unit: '' };
@@ -84,7 +78,7 @@ export const processSensorData = (data: Record<string, number[]>): Record<string
       unit: config.unit,
       status,
       change,
-      chartData: values
+      chartData: validValues,
     };
   });
 

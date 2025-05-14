@@ -1,5 +1,5 @@
-import React from 'react';
-import { Line } from 'react-chartjs-2';
+import React, { useMemo } from "react";
+import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,8 +9,11 @@ import {
   Title,
   Tooltip,
   Legend,
-  Filler
-} from 'chart.js';
+  Filler,
+  TimeScale,
+} from "chart.js";
+import 'chartjs-adapter-date-fns';
+import type { ChartData, ChartOptions } from "chart.js";
 
 ChartJS.register(
   CategoryScale,
@@ -20,40 +23,30 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  TimeScale
 );
 
 interface SensorChartProps {
-  data: number[]; // sensor values per second
-  timeRange: '1h' | '6h' | '24h'; // optional range switch
+  data: { x: Date; y: number }[];
+  timeRange: "1h" | "6h" | "24h";
   color: string;
   simplified?: boolean;
 }
 
-const SensorChart: React.FC<SensorChartProps> = ({ data, timeRange, color, simplified = false }) => {
-  const generateLabels = () => {
-    const now = new Date();
-    return data.map((_, i) => {
-      const time = new Date(now.getTime() - (data.length - 1 - i) * 1000);
-      return simplified
-        ? ''
-        : time.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          });
-    });
-  };
-
-  const chartData = {
-    labels: generateLabels(),
+const SensorChart: React.FC<SensorChartProps> = ({
+  data,
+  timeRange,
+  color,
+  simplified = false,
+}) => {
+  const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
     datasets: [
       {
-        label: '', // Hide label text on legend
-        data,
+        label: "",
+        data: data?.filter(d => d?.x && typeof d.y === "number") || [],
         borderColor: color,
-        backgroundColor: `${color}20`, // semi-transparent fill
+        backgroundColor: `${color}20`,
         borderWidth: 1.5,
         pointRadius: 0,
         pointHoverRadius: 3,
@@ -61,29 +54,32 @@ const SensorChart: React.FC<SensorChartProps> = ({ data, timeRange, color, simpl
         tension: 0.3,
       },
     ],
-  };
+  }), [data, color]);
 
-  const chartOptions = {
+  const chartOptions: ChartOptions<"line"> = useMemo(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: {
-        display: false,
-      },
+      legend: { display: false },
       tooltip: {
         enabled: !simplified,
-        mode: 'index' as const,
+        mode: "index",
         intersect: false,
       },
     },
     scales: {
       x: {
+        type: "time",
         display: !simplified,
-        title: {
-          display: false,
-        },
-        grid: {
-          display: false,
+        grid: { display: false },
+        time: {
+          tooltipFormat: "HH:mm:ss",
+          unit: "minute",
+          displayFormats: {
+            second: "HH:mm:ss",
+            minute: "HH:mm",
+            hour: "HH:mm",
+          },
         },
         ticks: {
           maxRotation: 0,
@@ -94,21 +90,13 @@ const SensorChart: React.FC<SensorChartProps> = ({ data, timeRange, color, simpl
       },
       y: {
         display: !simplified,
-        title: {
-          display: false,
-        },
-        grid: {
-          color: '#E5E7EB',
-        },
-        ticks: {
-          font: { size: 10 },
-        },
+        grid: { color: "#E5E7EB" },
+        ticks: { font: { size: 10 } },
       },
     },
-    animation: {
-      duration: 500,
-    },
-  };
+    animation: false,
+    normalized: true,
+  }), [simplified]);
 
   return <Line data={chartData} options={chartOptions} />;
 };
