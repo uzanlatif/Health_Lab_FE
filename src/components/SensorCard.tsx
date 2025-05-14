@@ -23,13 +23,13 @@ const SensorCard: React.FC<SensorCardProps> = ({
   const formattedValue = value.toFixed(2);
 
   const statusColors = {
-    normal: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    critical: 'bg-red-100 text-red-800',
+    normal: 'bg-green-800 text-green-100',
+    warning: 'bg-yellow-700 text-yellow-100',
+    critical: 'bg-red-800 text-red-100',
   };
 
   const isPositiveChange = change > 0;
-  const changeColor = isPositiveChange ? 'text-red-500' : 'text-green-500';
+  const changeColor = isPositiveChange ? 'text-red-400' : 'text-green-400';
   const ChangeIcon = isPositiveChange ? ArrowUp : ArrowDown;
   const absChange = Math.abs(change).toFixed(1);
 
@@ -43,26 +43,26 @@ const SensorCard: React.FC<SensorCardProps> = ({
     <div
       className={`
         flex justify-between items-center p-2 rounded-md shadow-sm transition
-        cursor-pointer hover:bg-gray-50
-        text-sm w-full max-w-[260px]
+        cursor-pointer hover:bg-gray-800
+        text-sm w-full max-w-[260px] bg-gray-900 text-gray-100
         ${borderColor[status]}
-        ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50' : ''}
+        ${isSelected ? 'ring-2 ring-blue-400 bg-gray-800' : ''}
       `}
       onClick={onClick}
     >
       {/* Kiri: Nama dan status */}
       <div className="flex flex-col">
         <div className="flex items-center mb-0.5">
-          <h3 className="text-gray-700 font-medium text-sm">{name}</h3>
+          <h3 className="text-gray-200 font-medium text-sm">{name}</h3>
           <span
             className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${statusColors[status]}`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         </div>
-        <p className="text-lg font-bold text-gray-800 leading-snug">
+        <p className="text-lg font-bold text-white leading-snug">
           {formattedValue}{' '}
-          <span className="text-xs font-normal text-gray-500">{unit}</span>
+          <span className="text-xs font-normal text-gray-400">{unit}</span>
         </p>
       </div>
 

@@ -11,13 +11,13 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className="w-64 bg-white shadow-md z-10 flex flex-col h-screen border-r border-gray-200">
+    <div className="w-64 bg-gray-900 text-gray-100 shadow-md z-10 flex flex-col h-screen border-r border-gray-800">
       {/* Logo */}
-      <div className="p-4 border-b border-gray-200 flex items-center">
+      <div className="p-4 border-b border-gray-800 flex items-center">
         <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center mr-3">
           <span className="text-white font-bold">Pi</span>
         </div>
-        <h1 className="text-xl font-bold text-gray-800">Health Labs</h1>
+        <h1 className="text-xl font-bold text-white">Health Labs</h1>
       </div>
 
       {/* Navigation */}
@@ -32,10 +32,10 @@ const Sidebar: React.FC = () => {
                 ${
                   isActive
                     ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }`}
             >
-              <item.icon className={`mr-3 h-5 w-5 ${isActive ? 'text-white' : ''}`} />
+              <item.icon className={`mr-3 h-5 w-5 ${isActive ? 'text-white' : 'text-gray-400'}`} />
               <span>{item.label}</span>
             </div>
           );
@@ -43,13 +43,13 @@ const Sidebar: React.FC = () => {
       </nav>
 
       {/* Footer - Status */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-800">
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mr-3">
-            <span className="text-blue-500 font-bold">RP</span>
+          <div className="w-8 h-8 rounded-full bg-blue-500 bg-opacity-20 flex items-center justify-center mr-3">
+            <span className="text-blue-400 font-bold">RP</span>
           </div>
           <div className="flex flex-col">
-            <p className="font-medium text-sm text-gray-800">Raspberry Pi</p>
+            <p className="font-medium text-sm text-gray-300">Raspberry Pi</p>
           </div>
         </div>
       </div>

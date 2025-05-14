@@ -67,7 +67,7 @@ const MultiBiosignalView: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-100">
       <Header
         isConnected={isConnected}
         isRecording={isRecording}
@@ -82,15 +82,15 @@ const MultiBiosignalView: React.FC = () => {
 
       {/* Content */}
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sensor Cards - LEFT (ukuran otomatis berdasarkan konten) */}
+        {/* Sensor Cards - LEFT */}
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
             <div
               key={category}
-              className="bg-white p-2 rounded-lg shadow-sm border border-gray-100"
+              className="bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-600"
             >
               <div className="flex justify-between items-center mb-3">
-                <h2 className="text-lg font-semibold text-gray-800 capitalize">
+                <h2 className="text-lg font-semibold text-gray-100 capitalize">
                   {category} Signals
                 </h2>
               </div>
@@ -118,12 +118,12 @@ const MultiBiosignalView: React.FC = () => {
           ))}
         </div>
 
-        {/* Sensor Chart - RIGHT (mepet kiri dan kanan dengan tinggi otomatis) */}
+        {/* Sensor Chart - RIGHT */}
         <div className="lg:w-full">
           {selectedSensor && processedData[selectedSensor] ? (
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+            <div className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">
+                <h2 className="text-xl font-semibold text-gray-100">
                   {processedData[selectedSensor].displayName} Logs
                 </h2>
                 <div className="flex items-center space-x-4">
@@ -132,7 +132,7 @@ const MultiBiosignalView: React.FC = () => {
                     onChange={(e) =>
                       setTimeRange(e.target.value as "1h" | "6h" | "24h")
                     }
-                    className="rounded-md border border-gray-300 text-sm py-1 px-2"
+                    className="rounded-md border border-gray-500 bg-gray-700 text-sm py-1 px-2 text-gray-200"
                   >
                     <option value="1h">Last 1h</option>
                     <option value="6h">Last 6h</option>
@@ -140,14 +140,14 @@ const MultiBiosignalView: React.FC = () => {
                   </select>
                   <button
                     onClick={() => setSelectedSensor(null)}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    className="text-sm text-gray-300 hover:text-gray-100"
                   >
                     Close
                   </button>
                 </div>
               </div>
 
-              {/* Grafik dengan tinggi otomatis */}
+              {/* Grafik */}
               <div className="h-auto">
                 <SensorChart
                   data={processedData[selectedSensor].chartData}
@@ -158,8 +158,8 @@ const MultiBiosignalView: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-full flex items-center justify-center">
-              <div className="text-center text-gray-500">
+            <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
+              <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
                 <p className="text-sm">
                   Click on a sensor to view detailed logs
