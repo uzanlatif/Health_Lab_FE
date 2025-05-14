@@ -1,148 +1,116 @@
-import React, { useState } from 'react';
-import { format } from 'date-fns';
+import React from 'react';
+import { Line } from 'react-chartjs-2';
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
   Tooltip,
-  ResponsiveContainer,
-  Legend
-} from 'recharts';
-import { SensorData } from '../utils/mockData';
+  Legend,
+  Filler
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface SensorChartProps {
-  sensor: SensorData;
+  data: number[]; // sensor values per second
+  timeRange: '1h' | '6h' | '24h'; // optional range switch
+  color: string;
+  simplified?: boolean;
 }
 
-// Custom tooltip component
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          {format(new Date(label), 'MMM d, h:mm a')}
-        </p>
-        <p className="text-sm font-semibold" style={{ color: payload[0].color }}>
-          {`${payload[0].value} ${payload[0].unit}`}
-        </p>
-      </div>
-    );
-  }
-
-  return null;
-};
-
-const SensorChart: React.FC<SensorChartProps> = ({ sensor }) => {
-  const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('6h');
-  
-  // Convert history data to a format Recharts can use
-  const formatDataForChart = () => {
-    const { history, unit } = sensor;
-    let filteredData = history;
-    
-    // Filter based on selected time range
-    if (timeRange === '1h') {
-      const oneHourAgo = Date.now() - 3600000;
-      filteredData = history.filter(point => point.timestamp > oneHourAgo);
-    } else if (timeRange === '6h') {
-      const sixHoursAgo = Date.now() - 6 * 3600000;
-      filteredData = history.filter(point => point.timestamp > sixHoursAgo);
-    }
-    
-    return filteredData.map(point => ({
-      timestamp: point.timestamp,
-      value: point.value,
-      unit
-    }));
+const SensorChart: React.FC<SensorChartProps> = ({ data, timeRange, color, simplified = false }) => {
+  const generateLabels = () => {
+    const now = new Date();
+    return data.map((_, i) => {
+      const time = new Date(now.getTime() - (data.length - 1 - i) * 1000);
+      return simplified
+        ? ''
+        : time.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+    });
   };
 
-  const chartData = formatDataForChart();
-  
-  // Calculate domain for Y axis (min and max with some padding)
-  const values = chartData.map(d => d.value);
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const padding = (maxValue - minValue) * 0.1;
-  
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 h-full flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-          {sensor.name}
-        </h2>
-        <div className="flex space-x-1">
-          {['1h', '6h', '24h'].map((range) => (
-            <button
-              key={range}
-              className={`px-3 py-1 text-xs rounded-md transition-colors
-                ${timeRange === range 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              onClick={() => setTimeRange(range as '1h' | '6h' | '24h')}
-            >
-              {range}
-            </button>
-          ))}
-        </div>
-      </div>
-      
-      <div className="flex-1 min-h-[300px]">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-            <XAxis 
-              dataKey="timestamp" 
-              tickFormatter={(timestamp) => format(new Date(timestamp), 'h:mm a')}
-              stroke="#9ca3af"
-            />
-            <YAxis 
-              domain={[Math.max(0, minValue - padding), maxValue + padding]}
-              stroke="#9ca3af" 
-            />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke={sensor.color}
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 6, strokeWidth: 0 }}
-              name={`${sensor.name} (${sensor.unit})`}
-              unit={sensor.unit}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-      
-      <div className="mt-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <span className="inline-block h-3 w-3 rounded-full" style={{ backgroundColor: sensor.color }}></span>
-          <span className="text-sm text-gray-500 dark:text-gray-400">Current: {sensor.currentValue} {sensor.unit}</span>
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          {sensor.warningThreshold && (
-            <span className="inline-flex items-center mr-2">
-              <span className="h-2 w-2 bg-yellow-400 rounded-full mr-1"></span>
-              Warning: {sensor.warningThreshold} {sensor.unit}
-            </span>
-          )}
-          {sensor.criticalThreshold && (
-            <span className="inline-flex items-center">
-              <span className="h-2 w-2 bg-red-500 rounded-full mr-1"></span>
-              Critical: {sensor.criticalThreshold} {sensor.unit}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  const chartData = {
+    labels: generateLabels(),
+    datasets: [
+      {
+        label: '', // Hide label text on legend
+        data,
+        borderColor: color,
+        backgroundColor: `${color}20`, // semi-transparent fill
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        fill: true,
+        tension: 0.3,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        enabled: !simplified,
+        mode: 'index' as const,
+        intersect: false,
+      },
+    },
+    scales: {
+      x: {
+        display: !simplified,
+        title: {
+          display: false,
+        },
+        grid: {
+          display: false,
+        },
+        ticks: {
+          maxRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 10,
+          font: { size: 10 },
+        },
+      },
+      y: {
+        display: !simplified,
+        title: {
+          display: false,
+        },
+        grid: {
+          color: '#E5E7EB',
+        },
+        ticks: {
+          font: { size: 10 },
+        },
+      },
+    },
+    animation: {
+      duration: 500,
+    },
+  };
+
+  return <Line data={chartData} options={chartOptions} />;
 };
 
 export default SensorChart;
