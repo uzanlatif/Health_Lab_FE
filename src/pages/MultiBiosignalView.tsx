@@ -16,23 +16,32 @@ const MultiBiosignalView: React.FC = () => {
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
+  // ✅ FIXED TIMESTAMP BUFFERING
   useEffect(() => {
     if (!sensorData) return;
 
     for (const sensorName of selectedSensors) {
       const newValues = sensorData[sensorName];
 
-      if (!Array.isArray(newValues) || newValues.some(v => typeof v !== "number")) {
+      if (!Array.isArray(newValues)) {
         console.warn("Invalid sensor data for:", sensorName, newValues);
         continue;
       }
 
-      const now = new Date();
       const currentBuffer = dataBufferRef.current[sensorName] || [];
 
+      // Dapatkan waktu start berdasarkan waktu terakhir
+      let startTime: Date;
+      if (currentBuffer.length > 0) {
+        const lastTime = currentBuffer[currentBuffer.length - 1].x.getTime();
+        startTime = new Date(lastTime + 1000); // tambahkan 1 detik
+      } else {
+        startTime = new Date(); // mulai dari sekarang
+      }
+
       const newBuffer = newValues.map((v, i) => ({
-        x: new Date(now.getTime() - (newValues.length - 1 - i) * 1000), // Assume 1 Hz
-        y: v,
+        x: new Date(startTime.getTime() + i * 1000),
+        y: typeof v === "number" && !isNaN(v) ? v : 0,
       }));
 
       const updatedBuffer = [...currentBuffer, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -15,6 +15,7 @@ import {
 import 'chartjs-adapter-date-fns';
 import type { ChartData, ChartOptions } from "chart.js";
 
+// Register necessary Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -40,13 +41,35 @@ const SensorChart: React.FC<SensorChartProps> = ({
   color,
   simplified = false,
 }) => {
+  // Debugging: optional logs
+  useEffect(() => {
+    if (!data || data.length === 0) {
+      console.warn("SensorChart received empty or invalid data.");
+    } else {
+      const sample = data[0];
+      console.log("SensorChart sample data:", sample);
+    }
+  }, [data]);
+
+  // Ensure data is clean: no NaNs, and x is a valid Date object
+  const cleanedData = useMemo(() => {
+    return (data || []).filter(
+      (d) =>
+        d &&
+        d.x instanceof Date &&
+        !isNaN(d.x.getTime()) &&
+        typeof d.y === "number" &&
+        !isNaN(d.y)
+    );
+  }, [data]);
+
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
     datasets: [
       {
-        label: "",
-        data: data?.filter(d => d?.x && typeof d.y === "number") || [],
+        label: "Sensor Data",
+        data: cleanedData,
         borderColor: color,
-        backgroundColor: `${color}20`,
+        backgroundColor: `${color}20`, // Transparent fill
         borderWidth: 1.5,
         pointRadius: 0,
         pointHoverRadius: 3,
@@ -54,7 +77,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
         tension: 0.3,
       },
     ],
-  }), [data, color]);
+  }), [cleanedData, color]);
 
   const chartOptions: ChartOptions<"line"> = useMemo(() => ({
     responsive: true,
