@@ -11,7 +11,7 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-  const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket("ws://172.30.81.62:8765");
+  const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket("ws://192.168.45.249:8765");
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };

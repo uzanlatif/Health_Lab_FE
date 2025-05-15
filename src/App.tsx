@@ -1,7 +1,10 @@
+// App.tsx
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import MultiBiosignalView from './pages/MultiBiosignalView';
+import ECGView from './pages/ECGView';
+import EEGView from './pages/EEGView';
 
 function App() {
   return (
@@ -9,6 +12,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<MultiBiosignalView />} />
+          <Route path="ecg" element={<ECGView />} />
+          <Route path="eeg" element={<EEGView />} />
         </Route>
       </Routes>
     </div>

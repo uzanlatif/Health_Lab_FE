@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+// Sidebar.tsx
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { BarChart2, Cpu, Activity } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
-  const [activeItem, setActiveItem] = useState<string>('MultiBioSignal');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navItems = [
-    { label: 'MultiBioSignal', icon: BarChart2 },
-    { label: '12-Leads ECG', icon: Cpu },
-    { label: '16-Channels EEG', icon: Activity },
+    { label: 'MultiBioSignal', icon: BarChart2, path: '/' },
+    { label: '12-Leads ECG', icon: Cpu, path: '/ecg' },
+    { label: '16-Channels EEG', icon: Activity, path: '/eeg' },
   ];
 
   return (
@@ -23,11 +26,11 @@ const Sidebar: React.FC = () => {
       {/* Navigation */}
       <nav className="flex-1 pt-4 space-y-1">
         {navItems.map((item, index) => {
-          const isActive = activeItem === item.label;
+          const isActive = location.pathname === item.path;
           return (
             <div
               key={index}
-              onClick={() => setActiveItem(item.label)}
+              onClick={() => navigate(item.path)}
               className={`flex items-center px-4 py-3 text-sm font-medium cursor-pointer transition-colors 
                 ${
                   isActive

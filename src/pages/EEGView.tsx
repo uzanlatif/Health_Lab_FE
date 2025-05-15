@@ -8,7 +8,7 @@ const EEGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h'>('6h');
   const [autoRefresh, setAutoRefresh] = useState(true);
   const { data: sensorData, lastUpdated, reconnect } = useWebSocket('ws://192.168.45.249:8765');
-  const processedData = processSensorData(sensorData);
+  // const processedData = processSensorData(sensorData);
 
   const formattedTime = lastUpdated
     ? new Date(lastUpdated).toLocaleTimeString('en-US', {
@@ -20,9 +20,9 @@ const EEGView: React.FC = () => {
     : '12:14:24 PM';
 
   // Filter only EEG channels
-  const eegChannels = Object.entries(processedData)
-    .filter(([key]) => key.includes('EEG'))
-    .map(([, value]) => value);
+  // // const eegChannels = Object.entries(processedData)
+  //   .filter(([key]) => key.includes('EEG'))
+  //   .map(([, value]) => value);
 
   return (
     <div className="space-y-6">
@@ -103,11 +103,11 @@ const EEGView: React.FC = () => {
         </div>
 
         <div className="h-[300px]">
-          <SensorChart
-            data={processedData['EEG CH11']?.chartData || []}
+          {/* <SensorChart
+            // data={processedData['EEG CH11']?.chartData || []}
             timeRange={timeRange}
             color="#3B82F6"
-          />
+          /> */}
         </div>
 
         <div className="mt-4 text-sm">
@@ -135,12 +135,12 @@ const EEGView: React.FC = () => {
           <div key={channel} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
             <h3 className="text-lg font-medium mb-2">EEG CH{channel}</h3>
             <div className="h-[100px] mb-2">
-              <SensorChart
+              {/* <SensorChart
                 data={processedData[`EEG CH${channel}`]?.chartData || []}
                 timeRange="1h"
                 color="#3B82F6"
                 simplified={true}
-              />
+              /> */}
             </div>
             <p className="text-sm text-gray-500">
               Aktivitas sinyal otak dari kanal CH{channel} dalam 1 jam terakhir.
