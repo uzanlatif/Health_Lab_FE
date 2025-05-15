@@ -1,5 +1,5 @@
 import React from "react";
-import { Play, StopCircle } from "lucide-react"; // pastikan lucide-react terinstal
+import { Play, StopCircle } from "lucide-react";
 
 interface HeaderProps {
   isConnected: boolean;
@@ -22,14 +22,14 @@ const Header: React.FC<HeaderProps> = ({
     <div className="flex flex-col md:flex-row md:items-center justify-between">
       {/* Title & Status */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Multi-Biosignals Monitor</h1>
-        <p className="text-gray-500 dark:text-gray-300">
+        <h1 className="text-2xl font-bold text-white">Multi-Biosignals Monitor</h1>
+        <p className="text-gray-300">
           Monitoring {statusCounts.all} health sensors | Last updated: {formattedTime}
           <span
             className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
               isConnected
-                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                ? "bg-green-900 text-green-200"
+                : "bg-red-900 text-red-200"
             }`}
           >
             {isConnected ? "Connected" : "Disconnected"}
