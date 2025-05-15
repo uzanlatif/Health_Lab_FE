@@ -15,7 +15,6 @@ import {
 import 'chartjs-adapter-date-fns';
 import type { ChartData, ChartOptions } from "chart.js";
 
-// Register necessary Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -41,26 +40,17 @@ const SensorChart: React.FC<SensorChartProps> = ({
   color,
   simplified = false,
 }) => {
-  // Debugging: optional logs
-  useEffect(() => {
-    if (!data || data.length === 0) {
-      console.warn("SensorChart received empty or invalid data.");
-    } else {
-      const sample = data[0];
-      console.log("SensorChart sample data:", sample);
-    }
-  }, [data]);
-
-  // Ensure data is clean: no NaNs, and x is a valid Date object
   const cleanedData = useMemo(() => {
-    return (data || []).filter(
-      (d) =>
-        d &&
-        d.x instanceof Date &&
-        !isNaN(d.x.getTime()) &&
-        typeof d.y === "number" &&
-        !isNaN(d.y)
-    );
+    return data
+      .filter(
+        (d) =>
+          d &&
+          d.x instanceof Date &&
+          !isNaN(d.x.getTime()) &&
+          typeof d.y === "number" &&
+          !isNaN(d.y)
+      )
+      .sort((a, b) => a.x.getTime() - b.x.getTime()); // sort data by time
   }, [data]);
 
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
@@ -69,7 +59,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
         label: "Sensor Data",
         data: cleanedData,
         borderColor: color,
-        backgroundColor: `${color}20`, // Transparent fill
+        backgroundColor: `${color}33`, // 20% opacity
         borderWidth: 1.5,
         pointRadius: 0,
         pointHoverRadius: 3,
@@ -93,11 +83,10 @@ const SensorChart: React.FC<SensorChartProps> = ({
     scales: {
       x: {
         type: "time",
-        display: !simplified,
         grid: { display: false },
         time: {
           tooltipFormat: "HH:mm:ss",
-          unit: "minute",
+          unit: timeRange === "1h" ? "second" : timeRange === "6h" ? "minute" : "hour",
           displayFormats: {
             second: "HH:mm:ss",
             minute: "HH:mm",
@@ -112,14 +101,17 @@ const SensorChart: React.FC<SensorChartProps> = ({
         },
       },
       y: {
-        display: !simplified,
         grid: { color: "#E5E7EB" },
         ticks: { font: { size: 10 } },
       },
     },
     animation: false,
     normalized: true,
-  }), [simplified]);
+  }), [simplified, timeRange]);
+
+  if (cleanedData.length === 0) {
+    return <div className="text-gray-400 text-sm px-2 py-1">No data available.</div>;
+  }
 
   return <Line data={chartData} options={chartOptions} />;
 };
