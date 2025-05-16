@@ -8,6 +8,7 @@ interface HeaderProps {
   formattedTime: string;
   reconnect: () => void;
   toggleRecording: () => void;
+  onDownload: () => void; // 🆕 download callback
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -17,10 +18,10 @@ const Header: React.FC<HeaderProps> = ({
   formattedTime,
   reconnect,
   toggleRecording,
+  onDownload,
 }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between">
-      {/* Title & Status */}
       <div>
         <h1 className="text-2xl font-bold text-white">
           Multi-Biosignals Monitor
@@ -40,9 +41,7 @@ const Header: React.FC<HeaderProps> = ({
         </p>
       </div>
 
-      {/* Buttons */}
       <div className="flex items-center mt-4 md:mt-0 space-x-2">
-        {/* Toggle Recording Button */}
         <button
           onClick={toggleRecording}
           className={`px-4 py-2 ${
@@ -64,8 +63,8 @@ const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        {/* Download Logs Button */}
         <button
+          onClick={onDownload}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center"
         >
           <Download className="w-4 h-4 mr-2" />

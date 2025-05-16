@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -32,6 +32,7 @@ interface SensorChartProps {
   timeRange: "1h" | "6h" | "24h";
   color: string;
   simplified?: boolean;
+  yAxisLimits?: { min: number; max: number }; // ✅ Tambahan untuk batas Y statis
 }
 
 const SensorChart: React.FC<SensorChartProps> = ({
@@ -39,6 +40,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
   timeRange,
   color,
   simplified = false,
+  yAxisLimits,
 }) => {
   const cleanedData = useMemo(() => {
     return data
@@ -50,7 +52,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
           typeof d.y === "number" &&
           !isNaN(d.y)
       )
-      .sort((a, b) => a.x.getTime() - b.x.getTime()); // sort data by time
+      .sort((a, b) => a.x.getTime() - b.x.getTime());
   }, [data]);
 
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
@@ -59,7 +61,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
         label: "Sensor Data",
         data: cleanedData,
         borderColor: color,
-        backgroundColor: `${color}33`, // 20% opacity
+        backgroundColor: `${color}33`,
         borderWidth: 1.5,
         pointRadius: 0,
         pointHoverRadius: 3,
@@ -103,11 +105,13 @@ const SensorChart: React.FC<SensorChartProps> = ({
       y: {
         grid: { color: "#E5E7EB" },
         ticks: { font: { size: 10 } },
+        min: yAxisLimits?.min, // ✅ Gunakan batas bawah jika diberikan
+        max: yAxisLimits?.max, // ✅ Gunakan batas atas jika diberikan
       },
     },
     animation: false,
     normalized: true,
-  }), [simplified, timeRange]);
+  }), [simplified, timeRange, yAxisLimits]);
 
   if (cleanedData.length === 0) {
     return <div className="text-gray-400 text-sm px-2 py-1">No data available.</div>;

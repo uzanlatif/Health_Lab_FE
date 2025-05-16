@@ -6,20 +6,42 @@ import Header from "../components/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
 
+
+// ── Define static Y-axis limits for each sensor ────────────────────────────────
+const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
+  ECG:          { min: -1.5, max:  1.5 },
+  PCG:          { min: -1.0, max:  1.0 },
+  PPG:          { min:  0.0, max:  5.0 },
+  NIBP:         { min:  0.0, max:200.0 },
+  EMG1:         { min: -2.0, max:  2.0 },
+  EMG2:         { min: -2.0, max:  2.0 },
+  MYOMETER:     { min:  -200000.0, max:200000.0 },
+  SPIRO:        { min:  0.0, max: 10.0 },
+  OXYGEN:       { min: 90.0, max:100.0 },
+  TEMPERATURE:  { min: 35.0, max: 40.0 },
+  "EEG CH11":   { min:-100.0, max:100.0 },
+  "EEG CH12":   { min:-100.0, max:100.0 },
+  "EEG CH13":   { min:-100.0, max:100.0 },
+  "EEG CH14":   { min:-100.0, max:100.0 },
+  "EEG CH15":   { min:-100.0, max:100.0 },
+  "EEG CH16":   { min:-100.0, max:100.0 },
+};
+
+
 const MultiBiosignalView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-  const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket("ws://192.168.45.249:8765");
+  const { data: sensorData, lastUpdated, reconnect, isConnected } =
+    useWebSocket("ws://192.168.45.249:8765");
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
+  const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
-  // ✅ Buffering data berdasarkan __timestamp__ dari server
+  // ── Collect incoming data into per-sensor buffers ────────────────────────────
   useEffect(() => {
-    console.log("📥 Received sensorData", sensorData);
-
     if (!sensorData) return;
 
     for (const sensorName of selectedSensors) {
@@ -27,25 +49,55 @@ const MultiBiosignalView: React.FC = () => {
       if (!Array.isArray(newValues)) continue;
 
       const currentBuffer = dataBufferRef.current[sensorName] || [];
-
       const newBuffer = newValues
-        .filter(
-          (v) =>
-            v &&
-            typeof v.y === "number" &&
-            !isNaN(v.y) &&
-            typeof v.__timestamp__ === "number"
-        )
-        .map((v) => ({
+        .filter(v => typeof v.y === "number" && !isNaN(v.y) && typeof v.__timestamp__ === "number")
+        .map(v => ({
           x: new Date(v.__timestamp__ * 1000),
           y: v.y,
         }));
 
-      const updatedBuffer = [...currentBuffer, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);
-      dataBufferRef.current[sensorName] = updatedBuffer;
+      dataBufferRef.current[sensorName] = [
+        ...currentBuffer,
+        ...newBuffer
+      ].slice(-MAX_BUFFER_SIZE[timeRange]);
     }
   }, [sensorData, selectedSensors, timeRange]);
 
+  // ── Toggle recording on/off and capture final logs ───────────────────────────
+  const toggleRecording = () => {
+    setIsRecording(prev => {
+      const next = !prev;
+      if (next) {
+        recordedLogsRef.current = {};
+      } else {
+        for (const name of selectedSensors) {
+          recordedLogsRef.current[name] = dataBufferRef.current[name] || [];
+        }
+        console.log("📁 Recorded logs:", recordedLogsRef.current);
+      }
+      return next;
+    });
+  };
+
+  // ── Download recorded logs as CSV ────────────────────────────────────────────
+  const downloadLogs = () => {
+    const lines = ["Sensor,Timestamp,Value"];
+    for (const [sensor, records] of Object.entries(recordedLogsRef.current)) {
+      for (const point of records) {
+        lines.push(`${sensor},${point.x.toISOString()},${point.y}`);
+      }
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "recorded_logs.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // ── Process raw buffers into chart-ready and status data ─────────────────────
   const processedData = useMemo(() => {
     const selectedBuffer: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {
@@ -56,18 +108,27 @@ const MultiBiosignalView: React.FC = () => {
     return processSensorData(selectedBuffer);
   }, [sensorData, selectedSensors, timeRange]);
 
-  const formattedTime = useMemo(() =>
-    lastUpdated
-      ? new Date(lastUpdated).toLocaleTimeString("en-US", { hour12: false })
-      : "--:--:--", [lastUpdated]);
+  // ── Format last-updated timestamp display ────────────────────────────────────
+  const formattedTime = useMemo(
+    () =>
+      lastUpdated
+        ? new Date(lastUpdated).toLocaleTimeString("en-US", { hour12: false })
+        : "--:--:--",
+    [lastUpdated]
+  );
 
-  const statusCounts = useMemo(() => ({
-    all: Object.keys(processedData).length,
-    critical: Object.values(processedData).filter((s) => s.status === "critical").length,
-    warning: Object.values(processedData).filter((s) => s.status === "warning").length,
-    normal: Object.values(processedData).filter((s) => s.status === "normal").length,
-  }), [processedData]);
+  // ── Count statuses for status cards ──────────────────────────────────────────
+  const statusCounts = useMemo(
+    () => ({
+      all: Object.keys(processedData).length,
+      critical: Object.values(processedData).filter(s => s.status === "critical").length,
+      warning:  Object.values(processedData).filter(s => s.status === "warning").length,
+      normal:   Object.values(processedData).filter(s => s.status === "normal").length,
+    }),
+    [processedData]
+  );
 
+  // ── Sensor group definitions ────────────────────────────────────────────────
   const sensorGroups = {
     Sensor: [
       "ECG", "PCG", "PPG", "NIBP", "EMG1", "EMG2", "MYOMETER",
@@ -76,11 +137,12 @@ const MultiBiosignalView: React.FC = () => {
     ],
   };
 
+  // ── Toggle sensor selection in sidebar ──────────────────────────────────────
   const toggleSensorSelection = (sensorName: string) => {
-    setSelectedSensors((prev) => {
+    setSelectedSensors(prev => {
       if (prev.includes(sensorName)) {
         delete dataBufferRef.current[sensorName];
-        return prev.filter((name) => name !== sensorName);
+        return prev.filter(name => name !== sensorName);
       } else {
         return [...prev, sensorName];
       }
@@ -95,12 +157,14 @@ const MultiBiosignalView: React.FC = () => {
         statusCounts={statusCounts}
         formattedTime={formattedTime}
         reconnect={reconnect}
-        toggleRecording={() => setIsRecording(!isRecording)}
+        toggleRecording={toggleRecording}
+        onDownload={downloadLogs}
       />
 
       <StatusCards counts={statusCounts} />
 
       <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sidebar: Sensor list */}
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
             <div key={category} className="bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-600">
@@ -108,7 +172,7 @@ const MultiBiosignalView: React.FC = () => {
                 {category} Signals
               </h2>
               <div className="flex flex-col gap-2">
-                {sensors.map((sensorName) => {
+                {sensors.map(sensorName => {
                   const sensor = processedData[sensorName];
                   return (
                     <SensorCard
@@ -128,11 +192,12 @@ const MultiBiosignalView: React.FC = () => {
           ))}
         </div>
 
+        {/* Main: Charts */}
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
-            selectedSensors.map((sensorName) => {
+            selectedSensors.map(sensorName => {
               const sensor = processedData[sensorName];
-              if (!sensor || !sensor.chartData || !Array.isArray(sensor.chartData)) return null;
+              if (!sensor || !Array.isArray(sensor.chartData)) return null;
 
               return (
                 <div key={sensorName} className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600 mb-4">
@@ -143,9 +208,7 @@ const MultiBiosignalView: React.FC = () => {
                     <div className="flex items-center space-x-4">
                       <select
                         value={timeRange}
-                        onChange={(e) =>
-                          setTimeRange(e.target.value as "1h" | "6h" | "24h")
-                        }
+                        onChange={e => setTimeRange(e.target.value as "1h" | "6h" | "24h")}
                         className="rounded-md border border-gray-500 bg-gray-700 text-sm py-1 px-2 text-gray-200"
                       >
                         <option value="1h">Last 1h</option>
@@ -154,9 +217,7 @@ const MultiBiosignalView: React.FC = () => {
                       </select>
                       <button
                         onClick={() =>
-                          setSelectedSensors((prev) =>
-                            prev.filter((name) => name !== sensorName)
-                          )
+                          setSelectedSensors(prev => prev.filter(name => name !== sensorName))
                         }
                         className="text-sm text-gray-300 hover:text-gray-100"
                       >
@@ -164,13 +225,13 @@ const MultiBiosignalView: React.FC = () => {
                       </button>
                     </div>
                   </div>
-
                   <div className="h-64">
                     <SensorChart
                       data={sensor.chartData}
                       timeRange={timeRange}
                       color="#EF4444"
                       simplified={false}
+                      yAxisLimits={sensorYAxisLimits[sensorName]}
                     />
                   </div>
                 </div>
