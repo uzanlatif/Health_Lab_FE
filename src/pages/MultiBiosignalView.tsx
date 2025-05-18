@@ -8,22 +8,22 @@ import { processSensorData } from "../utils/dataProcessingMBS";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  ECG: { min: -2.0, max: 2.0 }, // mV, sinyal jantung tipikal antara -1.5 sampai +1.5 mV
-  PCG: { min: -0.5, max: 0.5 }, // mV, suara jantung umumnya kecil
-  PPG: { min: 0.0, max: 1.5 }, // V, tergantung sensor & gain, biasanya dalam volt kecil
-  NIBP: { min: 40.0, max: 180.0 }, // mmHg, tekanan darah non-invasif (diastolic-systolic)
-  EMG1: { min: -5.0, max: 5.0 }, // mV, sinyal otot bisa bervariasi tergantung aktivitas
-  EMG2: { min: -5.0, max: 5.0 }, // mV
+  ECG: { min: -200000, max: 200000 }, // mV, sinyal jantung
+  PCG: { min: -200000, max: 200000 }, // mV, suara jantung
+  PPG: { min: -200000, max: 200000 }, // V, tergantung sensor & gain, biasanya dalam volt kecil
+  NIBP: { min: -200000, max: 200000 }, // mmHg, tekanan darah non-invasif (diastolic-systolic)
+  EMG1: { min: -200000, max: 200000 }, // mV, sinyal otot 
+  EMG2: { min: -200000, max: 200000 }, // mV
   MYOMETER: { min: -200000, max: 200000 }, // N atau AU (arbitrary units), tergantung alat, disesuaikan
-  SPIRO: { min: 0.0, max: 8.0 }, // L/s, laju aliran udara dalam pernapasan
-  OXYGEN: { min: 80.0, max: 100.0 }, // %, saturasi oksigen
-  TEMPERATURE: { min: 35.0, max: 42.0 }, // °C, suhu tubuh manusia normal
-  "EEG CH11": { min: -100, max: 100 }, // µV, sinyal EEG
-  "EEG CH12": { min: -100, max: 100 },
-  "EEG CH13": { min: -100, max: 100 },
-  "EEG CH14": { min: -100, max: 100 },
-  "EEG CH15": { min: -100, max: 100 },
-  "EEG CH16": { min: -100, max: 100 },
+  SPIRO: { min: -200000, max: 200000 }, // L/s, laju aliran udara dalam pernapasan
+  OXYGEN: { min: -200000, max: 200000 }, // %, saturasi oksigen
+  TEMPERATURE: { min: -200000, max: 200000 }, // °C, suhu tubuh manusia
+  "EEG CH11": { min: -200000, max: 200000 }, // µV, sinyal EEG
+  "EEG CH12": { min: -200000, max: 200000 },
+  "EEG CH13": { min: -200000, max: 200000 },
+  "EEG CH14": { min: -200000, max: 200000 },
+  "EEG CH15": { min: -200000, max: 200000 },
+  "EEG CH16": { min: -200000, max: 200000 },
 };
 
 const MultiBiosignalView: React.FC = () => {
@@ -36,7 +36,7 @@ const MultiBiosignalView: React.FC = () => {
     lastUpdated,
     reconnect,
     isConnected,
-  } = useWebSocket("ws://192.168.45.249:8765");
+  } = useWebSocket("ws://172.30.81.62:8765");
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
@@ -239,7 +239,7 @@ const MultiBiosignalView: React.FC = () => {
                       {sensor.displayName} Logs
                     </h2>
                     <div className="flex items-center space-x-4">
-                      <select
+                      {/* <select
                         value={timeRange}
                         onChange={(e) =>
                           setTimeRange(e.target.value as "1h" | "6h" | "24h")
@@ -249,8 +249,8 @@ const MultiBiosignalView: React.FC = () => {
                         <option value="1h">Last 1h</option>
                         <option value="6h">Last 6h</option>
                         <option value="24h">Last 24h</option>
-                      </select>
-                      <button
+                      </select> */}
+                      {/* <button
                         onClick={() =>
                           setSelectedSensors((prev) =>
                             prev.filter((name) => name !== sensorName)
@@ -259,7 +259,7 @@ const MultiBiosignalView: React.FC = () => {
                         className="text-sm text-gray-300 hover:text-gray-100"
                       >
                         Close
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                   <div className="h-64">
