@@ -4,26 +4,26 @@ import SensorCard from "../components/MBS/SensorCard";
 import SensorChart from "../components/MBS/SensorChart";
 import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
-import { processSensorData } from "../utils/dataProcessingMBS";
+import { processSensorData } from "../utils/dataProcessingEEG";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  ECG: { min: -200000, max: 200000 }, // mV, sinyal jantung
-  PCG: { min: -200000, max: 200000 }, // mV, suara jantung
-  PPG: { min: -200000, max: 200000 }, // V, tergantung sensor & gain, biasanya dalam volt kecil
-  NIBP: { min: -200000, max: 200000 }, // mmHg, tekanan darah non-invasif (diastolic-systolic)
-  EMG1: { min: -200000, max: 200000 }, // mV, sinyal otot 
-  EMG2: { min: -200000, max: 200000 }, // mV
-  MYOMETER: { min: -200000, max: 200000 }, // N atau AU (arbitrary units), tergantung alat, disesuaikan
-  SPIRO: { min: -200000, max: 200000 }, // L/s, laju aliran udara dalam pernapasan
-  OXYGEN: { min: -200000, max: 200000 }, // %, saturasi oksigen
-  TEMPERATURE: { min: -200000, max: 200000 }, // °C, suhu tubuh manusia
-  "EEG CH11": { min: -200000, max: 200000 }, // µV, sinyal EEG
-  "EEG CH12": { min: -200000, max: 200000 },
-  "EEG CH13": { min: -200000, max: 200000 },
-  "EEG CH14": { min: -200000, max: 200000 },
-  "EEG CH15": { min: -200000, max: 200000 },
-  "EEG CH16": { min: -200000, max: 200000 },
+  EEG_1: { min: -200000, max: 200000 }, 
+  EEG_2: { min: -200000, max: 200000 }, 
+  EEG_3: { min: -200000, max: 200000 }, 
+  EEG_4: { min: -200000, max: 200000 }, 
+  EEG_5: { min: -200000, max: 200000 }, 
+  EEG_6: { min: -200000, max: 200000 }, 
+  EEG_7: { min: -200000, max: 200000 }, 
+  EEG_8: { min: -200000, max: 200000 }, 
+  EEG_9: { min: -200000, max: 200000 }, 
+  EEG_10: { min: -200000, max: 200000 }, 
+  EEG_11: { min: -200000, max: 200000 }, 
+  EEG_12: { min: -200000, max: 200000 },
+  EEG_13: { min: -200000, max: 200000 },
+  EEG_14: { min: -200000, max: 200000 },
+  EEG_15: { min: -200000, max: 200000 },
+  EEG_16: { min: -200000, max: 200000 },
 };
 
 const EEGView: React.FC = () => {
@@ -145,22 +145,22 @@ const EEGView: React.FC = () => {
   // ── Sensor group definitions ────────────────────────────────────────────────
   const sensorGroups = {
     Sensor: [
-      "ECG",
-      "PCG",
-      "PPG",
-      "NIBP",
-      "EMG1",
-      "EMG2",
-      "MYOMETER",
-      "SPIRO",
-      "OXYGEN",
-      "TEMPERATURE",
-      "EEG CH11",
-      "EEG CH12",
-      "EEG CH13",
-      "EEG CH14",
-      "EEG CH15",
-      "EEG CH16",
+      "EEG_1",
+      "EEG_2",
+      "EEG_3",
+      "EEG_4",
+      "EEG_5",
+      "EEG_6",
+      "EEG_7",
+      "EEG_8",
+      "EEG_9",
+      "EEG_10",
+      "EEG_11",
+      "EEG_12",
+      "EEG_13",
+      "EEG_14",
+      "EEG_15",
+      "EEG_16",
     ],
   };
 

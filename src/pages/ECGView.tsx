@@ -8,22 +8,18 @@ import { processSensorData } from "../utils/dataProcessingECG";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  ECG: { min: -200000, max: 200000 }, // mV, sinyal jantung
-  PCG: { min: -200000, max: 200000 }, // mV, suara jantung
-  PPG: { min: -200000, max: 200000 }, // V, tergantung sensor & gain, biasanya dalam volt kecil
-  NIBP: { min: -200000, max: 200000 }, // mmHg, tekanan darah non-invasif (diastolic-systolic)
-  EMG1: { min: -200000, max: 200000 }, // mV, sinyal otot 
-  EMG2: { min: -200000, max: 200000 }, // mV
-  MYOMETER: { min: -200000, max: 200000 }, // N atau AU (arbitrary units), tergantung alat, disesuaikan
-  SPIRO: { min: -200000, max: 200000 }, // L/s, laju aliran udara dalam pernapasan
-  OXYGEN: { min: -200000, max: 200000 }, // %, saturasi oksigen
-  TEMPERATURE: { min: -200000, max: 200000 }, // °C, suhu tubuh manusia
-  "EEG CH11": { min: -200000, max: 200000 }, // µV, sinyal EEG
-  "EEG CH12": { min: -200000, max: 200000 },
-  "EEG CH13": { min: -200000, max: 200000 },
-  "EEG CH14": { min: -200000, max: 200000 },
-  "EEG CH15": { min: -200000, max: 200000 },
-  "EEG CH16": { min: -200000, max: 200000 },
+  LEAD_I: { min: -200000, max: 200000 }, 
+  LEAD_II: { min: -200000, max: 200000 },
+  LEAD_III: { min: -200000, max: 200000 }, 
+  AVR: { min: -200000, max: 200000 },
+  AVL: { min: -200000, max: 200000 }, 
+  AVF: { min: -200000, max: 200000 }, 
+  V1: { min: -200000, max: 200000 }, 
+  V2: { min: -200000, max: 200000 }, 
+  V3: { min: -200000, max: 200000 }, 
+  V4: { min: -200000, max: 200000 }, 
+  V5: { min: -200000, max: 200000 }, 
+  V6: { min: -200000, max: 200000 },
 };
 
 const ECGView: React.FC = () => {
@@ -145,22 +141,18 @@ const ECGView: React.FC = () => {
   // ── Sensor group definitions ────────────────────────────────────────────────
   const sensorGroups = {
     Sensor: [
-      "ECG",
-      "PCG",
-      "PPG",
-      "NIBP",
-      "EMG1",
-      "EMG2",
-      "MYOMETER",
-      "SPIRO",
-      "OXYGEN",
-      "TEMPERATURE",
-      "EEG CH11",
-      "EEG CH12",
-      "EEG CH13",
-      "EEG CH14",
-      "EEG CH15",
-      "EEG CH16",
+      "LEAD_I",
+      "LEAD_II",
+      "LEAD_III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6",
     ],
   };
 
@@ -239,27 +231,6 @@ const ECGView: React.FC = () => {
                       {sensor.displayName} Logs
                     </h2>
                     <div className="flex items-center space-x-4">
-                      {/* <select
-                        value={timeRange}
-                        onChange={(e) =>
-                          setTimeRange(e.target.value as "1h" | "6h" | "24h")
-                        }
-                        className="rounded-md border border-gray-500 bg-gray-700 text-sm py-1 px-2 text-gray-200"
-                      >
-                        <option value="1h">Last 1h</option>
-                        <option value="6h">Last 6h</option>
-                        <option value="24h">Last 24h</option>
-                      </select> */}
-                      {/* <button
-                        onClick={() =>
-                          setSelectedSensors((prev) =>
-                            prev.filter((name) => name !== sensorName)
-                          )
-                        }
-                        className="text-sm text-gray-300 hover:text-gray-100"
-                      >
-                        Close
-                      </button> */}
                     </div>
                   </div>
                   <div className="h-64">
