@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import StatusCards from "../components/StatusCards";
-import SensorCard from "../components/SensorCard";
-import SensorChart from "../components/SensorChart";
-import Header from "../components/Header";
+import StatusCards from "../components/MBS/StatusCards";
+import SensorCard from "../components/MBS/SensorCard";
+import SensorChart from "../components/MBS/SensorChart";
+import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
 
@@ -36,7 +36,7 @@ const MultiBiosignalView: React.FC = () => {
     lastUpdated,
     reconnect,
     isConnected,
-  } = useWebSocket("ws://172.30.81.62:8765");
+  } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URL);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
