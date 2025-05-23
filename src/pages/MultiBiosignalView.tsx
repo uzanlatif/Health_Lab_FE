@@ -12,7 +12,7 @@ const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
   PCG: { min: -200000, max: 200000 }, // mV, suara jantung
   PPG: { min: -200000, max: 200000 }, // V, tergantung sensor & gain, biasanya dalam volt kecil
   NIBP: { min: -200000, max: 200000 }, // mmHg, tekanan darah non-invasif (diastolic-systolic)
-  EMG1: { min: -200000, max: 200000 }, // mV, sinyal otot 
+  EMG1: { min: -200000, max: 200000 }, // mV, sinyal otot
   EMG2: { min: -200000, max: 200000 }, // mV
   MYOMETER: { min: -200000, max: 200000 }, // N atau AU (arbitrary units), tergantung alat, disesuaikan
   SPIRO: { min: -200000, max: 200000 }, // L/s, laju aliran udara dalam pernapasan
@@ -31,12 +31,17 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
+  const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
+    import.meta.env.VITE_PORT_MBS
+  }`;
   const {
     data: sensorData,
     lastUpdated,
     reconnect,
     isConnected,
-  } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URL);
+  } = useWebSocket(websocketUrl);
+
+  console.log(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});

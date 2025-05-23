@@ -8,17 +8,17 @@ import { processSensorData } from "../utils/dataProcessingEEG";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  EEG_1: { min: -200000, max: 200000 }, 
-  EEG_2: { min: -200000, max: 200000 }, 
-  EEG_3: { min: -200000, max: 200000 }, 
-  EEG_4: { min: -200000, max: 200000 }, 
-  EEG_5: { min: -200000, max: 200000 }, 
-  EEG_6: { min: -200000, max: 200000 }, 
-  EEG_7: { min: -200000, max: 200000 }, 
-  EEG_8: { min: -200000, max: 200000 }, 
-  EEG_9: { min: -200000, max: 200000 }, 
-  EEG_10: { min: -200000, max: 200000 }, 
-  EEG_11: { min: -200000, max: 200000 }, 
+  EEG_1: { min: -200000, max: 200000 },
+  EEG_2: { min: -200000, max: 200000 },
+  EEG_3: { min: -200000, max: 200000 },
+  EEG_4: { min: -200000, max: 200000 },
+  EEG_5: { min: -200000, max: 200000 },
+  EEG_6: { min: -200000, max: 200000 },
+  EEG_7: { min: -200000, max: 200000 },
+  EEG_8: { min: -200000, max: 200000 },
+  EEG_9: { min: -200000, max: 200000 },
+  EEG_10: { min: -200000, max: 200000 },
+  EEG_11: { min: -200000, max: 200000 },
   EEG_12: { min: -200000, max: 200000 },
   EEG_13: { min: -200000, max: 200000 },
   EEG_14: { min: -200000, max: 200000 },
@@ -31,12 +31,15 @@ const EEGView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
+  const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
+    import.meta.env.VITE_PORT_EEG
+  }`;
   const {
     data: sensorData,
     lastUpdated,
     reconnect,
     isConnected,
-  } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URL);
+  } = useWebSocket(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
@@ -238,8 +241,7 @@ const EEGView: React.FC = () => {
                     <h2 className="text-xl font-semibold text-gray-100">
                       {sensor.displayName} Logs
                     </h2>
-                    <div className="flex items-center space-x-4">
-                    </div>
+                    <div className="flex items-center space-x-4"></div>
                   </div>
                   <div className="h-64">
                     <SensorChart

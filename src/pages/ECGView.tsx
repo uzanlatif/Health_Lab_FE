@@ -8,17 +8,17 @@ import { processSensorData } from "../utils/dataProcessingECG";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  LEAD_I: { min: -200000, max: 200000 }, 
+  LEAD_I: { min: -200000, max: 200000 },
   LEAD_II: { min: -200000, max: 200000 },
-  LEAD_III: { min: -200000, max: 200000 }, 
+  LEAD_III: { min: -200000, max: 200000 },
   AVR: { min: -200000, max: 200000 },
-  AVL: { min: -200000, max: 200000 }, 
-  AVF: { min: -200000, max: 200000 }, 
-  V1: { min: -200000, max: 200000 }, 
-  V2: { min: -200000, max: 200000 }, 
-  V3: { min: -200000, max: 200000 }, 
-  V4: { min: -200000, max: 200000 }, 
-  V5: { min: -200000, max: 200000 }, 
+  AVL: { min: -200000, max: 200000 },
+  AVF: { min: -200000, max: 200000 },
+  V1: { min: -200000, max: 200000 },
+  V2: { min: -200000, max: 200000 },
+  V3: { min: -200000, max: 200000 },
+  V4: { min: -200000, max: 200000 },
+  V5: { min: -200000, max: 200000 },
   V6: { min: -200000, max: 200000 },
 };
 
@@ -27,12 +27,15 @@ const ECGView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
+  const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
+    import.meta.env.VITE_PORT_ECG
+  }`;
   const {
     data: sensorData,
     lastUpdated,
     reconnect,
     isConnected,
-  } = useWebSocket(import.meta.env.VITE_WEBSOCKET_URL);
+  } = useWebSocket(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
@@ -230,8 +233,7 @@ const ECGView: React.FC = () => {
                     <h2 className="text-xl font-semibold text-gray-100">
                       {sensor.displayName} Logs
                     </h2>
-                    <div className="flex items-center space-x-4">
-                    </div>
+                    <div className="flex items-center space-x-4"></div>
                   </div>
                   <div className="h-64">
                     <SensorChart
