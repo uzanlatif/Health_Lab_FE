@@ -14,21 +14,21 @@ export const processSensorData = (
   const result: Record<string, SensorData> = {};
 
   const sensorConfig: Record<string, { displayName: string; unit: string }> = {
-    'EEG_1': { displayName: 'LEAD_I', unit: 'BPM' },
-    'EEG_2': { displayName: 'LEAD_II', unit: 'mmHg' },
-    'EEG_3': { displayName: 'LEAD_III', unit: 'dB' },
-    'EEG_4': { displayName: 'AVR', unit: 'mV' },
-    'EEG_5': { displayName: 'AVL', unit: 'mV' },
-    'EEG_6': { displayName: 'AVF', unit: 'N' },
-    'EEG_7': { displayName: 'V1', unit: 'L/min' },
-    'EEG_8': { displayName: 'V2', unit: '°C' },
-    'EEG_9': { displayName: 'V3', unit: 'mmHg' },
-    'EEG_10': { displayName: 'V4', unit: '%' },
-    'EEG_12': { displayName: 'V5', unit: 'μV' },
-    'EEG_13': { displayName: 'V6', unit: 'μV' },
-    'EEG_14': { displayName: 'V6', unit: 'μV' },
-    'EEG_15': { displayName: 'V6', unit: 'μV' },
-    'EEG_16': { displayName: 'V6', unit: 'μV' },
+    'EEG_1': { displayName: 'EEG_1', unit: 'BPM' },
+    'EEG_2': { displayName: 'EEG_2', unit: 'mmHg' },
+    'EEG_3': { displayName: 'EEG_3', unit: 'dB' },
+    'EEG_4': { displayName: 'EEG_4', unit: 'mV' },
+    'EEG_5': { displayName: 'EEG_5', unit: 'mV' },
+    'EEG_6': { displayName: 'EEG_6', unit: 'N' },
+    'EEG_7': { displayName: 'EEG_7', unit: 'L/min' },
+    'EEG_8': { displayName: 'EEG_8', unit: '°C' },
+    'EEG_9': { displayName: 'EEG_9', unit: 'mmHg' },
+    'EEG_10': { displayName: 'EEG_10', unit: '%' },
+    'EEG_12': { displayName: 'EEG_12', unit: 'μV' },
+    'EEG_13': { displayName: 'EEG_13', unit: 'μV' },
+    'EEG_14': { displayName: 'EEG_14', unit: 'μV' },
+    'EEG_15': { displayName: 'EEG_15', unit: 'μV' },
+    'EEG_16': { displayName: 'EEG_16', unit: 'μV' },
   };
 
   Object.entries(data).forEach(([key, values]) => {
