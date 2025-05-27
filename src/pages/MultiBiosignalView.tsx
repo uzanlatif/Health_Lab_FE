@@ -31,9 +31,15 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-  const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
-    import.meta.env.VITE_PORT_MBS
-  }`;
+  const websocketUrl = useMemo(() => {
+  const host = import.meta.env.VITE_WEBSOCKET_URL;
+  const port = import.meta.env.VITE_PORT_MBS;
+  return `ws://${host}:${port}`;
+  }, []);
+
+  // const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
+  //   import.meta.env.VITE_PORT_MBS
+  // }`;
   const {
     data: sensorData,
     lastUpdated,
