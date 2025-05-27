@@ -5,6 +5,7 @@ import SensorChart from "../components/MBS/SensorChart";
 import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
+import { useIpAddress } from "../context/IpAddressContext";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
@@ -31,15 +32,14 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-  const websocketUrl = useMemo(() => {
-  const host = import.meta.env.VITE_WEBSOCKET_URL;
-  const port = import.meta.env.VITE_PORT_MBS;
-  return `ws://${host}:${port}`;
-  }, []);
+  const { ipAddress } = useIpAddress();
 
-  // const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
-  //   import.meta.env.VITE_PORT_MBS
-  // }`;
+  const websocketUrl = useMemo(() => {
+    if (!ipAddress) return "";
+    const port = import.meta.env.VITE_PORT_MBS;
+    return `ws://${ipAddress}:${port}`;
+  }, [ipAddress]);
+
   const {
     data: sensorData,
     lastUpdated,
@@ -249,29 +249,7 @@ const MultiBiosignalView: React.FC = () => {
                     <h2 className="text-xl font-semibold text-gray-100">
                       {sensor.displayName} Logs
                     </h2>
-                    <div className="flex items-center space-x-4">
-                      {/* <select
-                        value={timeRange}
-                        onChange={(e) =>
-                          setTimeRange(e.target.value as "1h" | "6h" | "24h")
-                        }
-                        className="rounded-md border border-gray-500 bg-gray-700 text-sm py-1 px-2 text-gray-200"
-                      >
-                        <option value="1h">Last 1h</option>
-                        <option value="6h">Last 6h</option>
-                        <option value="24h">Last 24h</option>
-                      </select> */}
-                      {/* <button
-                        onClick={() =>
-                          setSelectedSensors((prev) =>
-                            prev.filter((name) => name !== sensorName)
-                          )
-                        }
-                        className="text-sm text-gray-300 hover:text-gray-100"
-                      >
-                        Close
-                      </button> */}
-                    </div>
+                    <div className="flex items-center space-x-4"></div>
                   </div>
                   <div className="h-64">
                     <SensorChart

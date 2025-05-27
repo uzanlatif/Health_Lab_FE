@@ -5,6 +5,7 @@ import SensorChart from "../components/ECG/SensorChart";
 import Header from "../components/ECG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingECG";
+import { useIpAddress } from "../context/IpAddressContext";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
@@ -27,15 +28,14 @@ const ECGView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-   const websocketUrl = useMemo(() => {
-    const host = import.meta.env.VITE_WEBSOCKET_URL;
-    const port = import.meta.env.VITE_PORT_ECG;
-    return `ws://${host}:${port}`;
-    }, []);
+  const { ipAddress } = useIpAddress();
 
-  // const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
-  //   import.meta.env.VITE_PORT_ECG
-  // }`;
+  const websocketUrl = useMemo(() => {
+    if (!ipAddress) return "";
+    const port = import.meta.env.VITE_PORT_ECG;
+    return `ws://${ipAddress}:${port}`;
+  }, [ipAddress]);
+
   const {
     data: sensorData,
     lastUpdated,

@@ -5,6 +5,7 @@ import SensorChart from "../components/MBS/SensorChart";
 import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingEEG";
+import { useIpAddress } from "../context/IpAddressContext";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
@@ -31,14 +32,14 @@ const EEGView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-   const websocketUrl = useMemo(() => {
-    const host = import.meta.env.VITE_WEBSOCKET_URL;
+  const { ipAddress } = useIpAddress();
+
+  const websocketUrl = useMemo(() => {
+    if (!ipAddress) return "";
     const port = import.meta.env.VITE_PORT_EEG;
-    return `ws://${host}:${port}`;
-    }, []);
-  // const websocketUrl = `${import.meta.env.VITE_WEBSOCKET_URL}:${
-  //   import.meta.env.VITE_PORT_EEG
-  // }`;
+    return `ws://${ipAddress}:${port}`;
+  }, [ipAddress]);
+
   const {
     data: sensorData,
     lastUpdated,
