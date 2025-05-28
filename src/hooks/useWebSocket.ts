@@ -23,12 +23,24 @@ const useWebSocket = (url: string): WebSocketHookResult => {
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
+  const isValidWsUrl = (url: string) => {
+    // Accept both ws:// and wss:// with IP or domain and port
+    return /^(ws|wss):\/\/[a-zA-Z0-9.-]+:\d+$/.test(url);
+  };
+
   const connect = useCallback(() => {
+    console.log("🌐 WebSocket URL:", url);
+
+    if (!url || !isValidWsUrl(url)) {
+      console.warn("⚠️ Skipping WebSocket connect: invalid or empty URL", url);
+      return;
+    }
+
     try {
       const socket = new WebSocket(url);
 
       socket.onopen = () => {
-        console.log('🔌 WebSocket connected');
+        console.log("🔌 WebSocket connected");
         setIsConnected(true);
       };
 
@@ -36,7 +48,6 @@ const useWebSocket = (url: string): WebSocketHookResult => {
         try {
           const receivedData: WebSocketData = JSON.parse(event.data);
 
-          // Validate structure
           if (typeof receivedData === 'object' && receivedData !== null) {
             for (const sensor in receivedData) {
               const samples = receivedData[sensor];
@@ -55,19 +66,21 @@ const useWebSocket = (url: string): WebSocketHookResult => {
       };
 
       socket.onclose = () => {
-        console.log('🔌 WebSocket disconnected');
+        console.log("🔌 WebSocket disconnected");
         setIsConnected(false);
+
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
+
         reconnectTimeoutRef.current = window.setTimeout(() => {
-          console.log('🔁 Reconnecting...');
+          console.log("🔁 Reconnecting...");
           connect();
         }, 5000);
       };
 
       socket.onerror = (error) => {
-        console.error('⚠️ WebSocket error:', error);
+        console.error("⚠️ WebSocket error:", error);
         socket.close();
       };
 
@@ -80,7 +93,7 @@ const useWebSocket = (url: string): WebSocketHookResult => {
         }
       };
     } catch (error) {
-      console.error('⚠️ Connection error:', error);
+      console.error("⚠️ Connection error:", error);
     }
   }, [url]);
 

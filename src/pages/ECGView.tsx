@@ -33,7 +33,7 @@ const ECGView: React.FC = () => {
   const websocketUrl = useMemo(() => {
     if (!ipAddress) return "";
     const port = import.meta.env.VITE_PORT_ECG;
-    return `ws://${ipAddress}:${port}`;
+    return `wss://10.42.0.1:${port}`;
   }, [ipAddress]);
 
   const {

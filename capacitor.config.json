@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.sensorview",
-  "appName": "SensorView",
+  "appId": "com.example.sensorview2",
+  "appName": "SensorView2",
   "webDir": "dist",
   "bundledWebRuntime": false
 }
