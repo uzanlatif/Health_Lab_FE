@@ -2,12 +2,13 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
-import { IpAddressProvider } from '../context/IpAddressContext';
 
 const Layout: React.FC = () => {
   return (
-    <IpAddressProvider>
-      <div className="flex h-screen overflow-hidden bg-gray-950 text-gray-100">
+    <div
+      className="flex h-screen overflow-hidden bg-gray-950 text-gray-100"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }} // ✅ Tambahkan safe area top
+    >
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar />
@@ -16,8 +17,6 @@ const Layout: React.FC = () => {
         </main>
       </div>
     </div>
-    </IpAddressProvider>
-    
   );
 };
 
