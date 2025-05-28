@@ -33,13 +33,13 @@ const Navbar: React.FC = () => {
 
         <div className="relative flex items-center space-x-4">
           <button
-            onClick={handleProfileClick}
+            // onClick={handleProfileClick}
             className="p-2 rounded-full hover:bg-gray-800 transition-colors"
           >
             <User className="h-5 w-5 text-gray-300" />
           </button>
 
-          {showIpInput && (
+          {/* {showIpInput && (
             <div className="absolute right-0 top-12 bg-gray-800 p-4 rounded shadow-md w-64 z-10">
               <label className="block text-sm text-white mb-2">IP Address</label>
               <input
@@ -56,7 +56,7 @@ const Navbar: React.FC = () => {
                 Save
               </button>
             </div>
-          )}
+          )} */}
         </div>
       </div>
     </header>

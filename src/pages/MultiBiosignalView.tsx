@@ -5,7 +5,7 @@ import SensorChart from "../components/MBS/SensorChart";
 import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
-import { useIpAddress } from "../context/IpAddressContext";
+// import { useIpAddress } from "../context/IpAddressContext";
 
 // ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
@@ -32,20 +32,19 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-  const { ipAddress } = useIpAddress();
-
   const websocketUrl = useMemo(() => {
-    if (!ipAddress) return "";
-    const port = import.meta.env.VITE_PORT_MBS;
-    return `wss://10.42.0.1:${port}`;
-  }, [ipAddress]);
+  const port = import.meta.env.VITE_PORT_MBS;
+  const ip = import.meta.env.VITE_IP_ADDRESS;
+  return `wss://${ip}:${port}`;
+}, []);
 
-  const {
-    data: sensorData,
-    lastUpdated,
-    reconnect,
-    isConnected,
-  } = useWebSocket(websocketUrl);
+const {
+  data: sensorData,
+  lastUpdated,
+  reconnect,
+  isConnected,
+} = useWebSocket(websocketUrl);
+
 
   console.log(websocketUrl);
 
