@@ -6,7 +6,6 @@ import Header from "../components/EEG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingEEG";
 
-// ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
   EEG_1: { min: -200000, max: 200000 },
   EEG_2: { min: -200000, max: 200000 },
@@ -48,7 +47,6 @@ const EEGView: React.FC = () => {
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
-  // ── Collect incoming data into per-sensor buffers ────────────────────────────
   useEffect(() => {
     if (!sensorData) return;
 
@@ -69,30 +67,41 @@ const EEGView: React.FC = () => {
           y: v.y,
         }));
 
-      dataBufferRef.current[sensorName] = [
-        ...currentBuffer,
-        ...newBuffer,
-      ].slice(-MAX_BUFFER_SIZE[timeRange]);
-    }
-  }, [sensorData, selectedSensors, timeRange]);
+      const merged = [...currentBuffer, ...newBuffer].slice(
+        -MAX_BUFFER_SIZE[timeRange]
+      );
+      dataBufferRef.current[sensorName] = merged;
 
-  // ── Toggle recording on/off and capture final logs ───────────────────────────
+      // If recording, also store to recordedLogsRef
+      if (isRecording) {
+        if (!recordedLogsRef.current[sensorName]) {
+          recordedLogsRef.current[sensorName] = [];
+        }
+        recordedLogsRef.current[sensorName].push(...newBuffer);
+      }
+    }
+  }, [sensorData, selectedSensors, timeRange, isRecording]);
+
   const toggleRecording = () => {
     setIsRecording((prev) => {
       const next = !prev;
       if (next) {
         recordedLogsRef.current = {};
       } else {
-        for (const name of selectedSensors) {
-          recordedLogsRef.current[name] = dataBufferRef.current[name] || [];
+        const exportData: Record<string, { x: string; y: number }[]> = {};
+        for (const [key, records] of Object.entries(recordedLogsRef.current)) {
+          exportData[key] = records.map(({ x, y }) => ({
+            x: new Date(x).toISOString(),
+            y,
+          }));
         }
-        console.log("📁 Recorded logs:", recordedLogsRef.current);
+        localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
+        console.log("✅ EEG logs saved to localStorage.");
       }
       return next;
     });
   };
 
-  // ── Download recorded logs as CSV ────────────────────────────────────────────
   const downloadLogs = () => {
     const lines = ["Sensor,Timestamp,Value"];
     for (const [sensor, records] of Object.entries(recordedLogsRef.current)) {
@@ -106,13 +115,12 @@ const EEGView: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "recorded_logs.csv");
+    link.setAttribute("download", "recorded_eeg_logs.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // ── Process raw buffers into chart-ready and status data ─────────────────────
   const processedData = useMemo(() => {
     const selectedBuffer: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {
@@ -123,7 +131,6 @@ const EEGView: React.FC = () => {
     return processSensorData(selectedBuffer);
   }, [sensorData, selectedSensors, timeRange]);
 
-  // ── Format last-updated timestamp display ────────────────────────────────────
   const formattedTime = useMemo(
     () =>
       lastUpdated
@@ -132,7 +139,6 @@ const EEGView: React.FC = () => {
     [lastUpdated]
   );
 
-  // ── Count statuses for status cards ──────────────────────────────────────────
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
@@ -148,29 +154,13 @@ const EEGView: React.FC = () => {
     [processedData]
   );
 
-  // ── Sensor group definitions ────────────────────────────────────────────────
   const sensorGroups = {
     Sensor: [
-      "EEG_1",
-      "EEG_2",
-      "EEG_3",
-      "EEG_4",
-      "EEG_5",
-      "EEG_6",
-      "EEG_7",
-      "EEG_8",
-      "EEG_9",
-      "EEG_10",
-      "EEG_11",
-      "EEG_12",
-      "EEG_13",
-      "EEG_14",
-      "EEG_15",
-      "EEG_16",
+      "EEG_1", "EEG_2", "EEG_3", "EEG_4", "EEG_5", "EEG_6", "EEG_7", "EEG_8",
+      "EEG_9", "EEG_10", "EEG_11", "EEG_12", "EEG_13", "EEG_14", "EEG_15", "EEG_16",
     ],
   };
 
-  // ── Toggle sensor selection in sidebar ──────────────────────────────────────
   const toggleSensorSelection = (sensorName: string) => {
     setSelectedSensors((prev) => {
       if (prev.includes(sensorName)) {
@@ -197,7 +187,6 @@ const EEGView: React.FC = () => {
       <StatusCards counts={statusCounts} />
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar: Sensor list */}
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
             <div
@@ -228,7 +217,6 @@ const EEGView: React.FC = () => {
           ))}
         </div>
 
-        {/* Main: Charts */}
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
             selectedSensors.map((sensorName) => {
@@ -244,7 +232,6 @@ const EEGView: React.FC = () => {
                     <h2 className="text-xl font-semibold text-gray-100">
                       {sensor.displayName} Logs
                     </h2>
-                    <div className="flex items-center space-x-4"></div>
                   </div>
                   <div className="h-64">
                     <SensorChart

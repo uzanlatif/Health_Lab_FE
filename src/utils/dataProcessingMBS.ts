@@ -14,22 +14,22 @@ export const processSensorData = (
   const result: Record<string, SensorData> = {};
 
   const sensorConfig: Record<string, { displayName: string; unit: string }> = {
-    'ECG': { displayName: 'ECG', unit: 'BPM' },
-    'PPG': { displayName: 'PPG', unit: 'mmHg' },
-    'PCG': { displayName: 'PCG Phonocardiogram', unit: 'dB' },
+    'ECG': { displayName: 'ECG', unit: 'mV' },
+    'PPG': { displayName: 'PPG', unit: 'mV' },
+    'PCG': { displayName: 'PCG Phonocardiogram', unit: 'mV' },
     'EMG1': { displayName: 'EMG Channel 1', unit: 'mV' },
     'EMG2': { displayName: 'EMG Channel 2', unit: 'mV' },
     'MYOMETER': { displayName: 'MYOMETER - Muscle Strength', unit: 'N' },
-    'SPIRO': { displayName: 'SPIRO - Spirometry', unit: 'L/min' },
+    'SPIRO': { displayName: 'SPIRO - Spirometry', unit: 'L/s' },
     'TEMPERATURE': { displayName: 'TEMPERATURE - Body', unit: '°C' },
     'NIBP': { displayName: 'NIBP - Blood Pressure', unit: 'mmHg' },
     'OXYGEN': { displayName: 'Oxygen Saturation', unit: '%' },
-    'EEG CH11': { displayName: 'EEG Channel 11', unit: 'μV' },
-    'EEG CH12': { displayName: 'EEG Channel 12', unit: 'μV' },
-    'EEG CH13': { displayName: 'EEG Channel 13', unit: 'μV' },
-    'EEG CH14': { displayName: 'EEG Channel 14', unit: 'μV' },
-    'EEG CH15': { displayName: 'EEG Channel 15', unit: 'μV' },
-    'EEG CH16': { displayName: 'EEG Channel 16', unit: 'μV' },
+    'EEG CH11': { displayName: 'EEG Channel 11', unit: 'mV' },
+    'EEG CH12': { displayName: 'EEG Channel 12', unit: 'mV' },
+    'EEG CH13': { displayName: 'EEG Channel 13', unit: 'mV' },
+    'EEG CH14': { displayName: 'EEG Channel 14', unit: 'mV' },
+    'EEG CH15': { displayName: 'EEG Channel 15', unit: 'mV' },
+    'EEG CH16': { displayName: 'EEG Channel 16', unit: 'mV' },
   };
 
   Object.entries(data).forEach(([key, values]) => {
