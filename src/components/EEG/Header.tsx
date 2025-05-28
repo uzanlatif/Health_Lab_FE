@@ -8,7 +8,7 @@ interface HeaderProps {
   formattedTime: string;
   reconnect: () => void;
   toggleRecording: () => void;
-  onDownload: () => void; // 🆕 download callback
+  onDownload: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({

@@ -5,21 +5,19 @@ import SensorChart from "../components/MBS/SensorChart";
 import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
-// import { useIpAddress } from "../context/IpAddressContext";
 
-// ── Define static Y-axis limits for each sensor ────────────────────────────────
 const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  ECG: { min: -200000, max: 200000 }, // mV, sinyal jantung
-  PCG: { min: -200000, max: 200000 }, // mV, suara jantung
-  PPG: { min: -200000, max: 200000 }, // V, tergantung sensor & gain, biasanya dalam volt kecil
-  NIBP: { min: -200000, max: 200000 }, // mmHg, tekanan darah non-invasif (diastolic-systolic)
-  EMG1: { min: -200000, max: 200000 }, // mV, sinyal otot
-  EMG2: { min: -200000, max: 200000 }, // mV
-  MYOMETER: { min: -200000, max: 200000 }, // N atau AU (arbitrary units), tergantung alat, disesuaikan
-  SPIRO: { min: -200000, max: 200000 }, // L/s, laju aliran udara dalam pernapasan
-  OXYGEN: { min: -200000, max: 200000 }, // %, saturasi oksigen
-  TEMPERATURE: { min: -200000, max: 200000 }, // °C, suhu tubuh manusia
-  "EEG CH11": { min: -200000, max: 200000 }, // µV, sinyal EEG
+  ECG: { min: -200000, max: 200000 },
+  PCG: { min: -200000, max: 200000 },
+  PPG: { min: -200000, max: 200000 },
+  NIBP: { min: -200000, max: 200000 },
+  EMG1: { min: -200000, max: 200000 },
+  EMG2: { min: -200000, max: 200000 },
+  MYOMETER: { min: -200000, max: 200000 },
+  SPIRO: { min: -200000, max: 200000 },
+  OXYGEN: { min: -200000, max: 200000 },
+  TEMPERATURE: { min: -200000, max: 200000 },
+  "EEG CH11": { min: -200000, max: 200000 },
   "EEG CH12": { min: -200000, max: 200000 },
   "EEG CH13": { min: -200000, max: 200000 },
   "EEG CH14": { min: -200000, max: 200000 },
@@ -33,26 +31,22 @@ const MultiBiosignalView: React.FC = () => {
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
   const websocketUrl = useMemo(() => {
-  const port = import.meta.env.VITE_PORT_MBS;
-  const ip = import.meta.env.VITE_IP_ADDRESS;
-  return `wss://${ip}:${port}`;
-}, []);
+    const port = import.meta.env.VITE_PORT_MBS;
+    const ip = import.meta.env.VITE_IP_ADDRESS;
+    return `wss://${ip}:${port}`;
+  }, []);
 
-const {
-  data: sensorData,
-  lastUpdated,
-  reconnect,
-  isConnected,
-} = useWebSocket(websocketUrl);
-
-
-  console.log(websocketUrl);
+  const {
+    data: sensorData,
+    lastUpdated,
+    reconnect,
+    isConnected,
+  } = useWebSocket(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
-  // ── Collect incoming data into per-sensor buffers ────────────────────────────
   useEffect(() => {
     if (!sensorData) return;
 
@@ -73,50 +67,42 @@ const {
           y: v.y,
         }));
 
-      dataBufferRef.current[sensorName] = [
-        ...currentBuffer,
-        ...newBuffer,
-      ].slice(-MAX_BUFFER_SIZE[timeRange]);
-    }
-  }, [sensorData, selectedSensors, timeRange]);
+      const merged = [...currentBuffer, ...newBuffer].slice(
+        -MAX_BUFFER_SIZE[timeRange]
+      );
+      dataBufferRef.current[sensorName] = merged;
 
-  // ── Toggle recording on/off and capture final logs ───────────────────────────
+      // Jika recording aktif, simpan juga ke recordedLogsRef
+      if (isRecording) {
+        if (!recordedLogsRef.current[sensorName]) {
+          recordedLogsRef.current[sensorName] = [];
+        }
+        recordedLogsRef.current[sensorName].push(...newBuffer);
+      }
+    }
+  }, [sensorData, selectedSensors, timeRange, isRecording]);
+
   const toggleRecording = () => {
     setIsRecording((prev) => {
       const next = !prev;
       if (next) {
         recordedLogsRef.current = {};
       } else {
-        for (const name of selectedSensors) {
-          recordedLogsRef.current[name] = dataBufferRef.current[name] || [];
+        // Simpan hasil rekaman ke localStorage
+        const exportData: Record<string, { x: string; y: number }[]> = {};
+        for (const [key, records] of Object.entries(recordedLogsRef.current)) {
+          exportData[key] = records.map(({ x, y }) => ({
+            x: new Date(x).toISOString(),
+            y,
+          }));
         }
-        console.log("📁 Recorded logs:", recordedLogsRef.current);
+        localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
+        console.log("✅ Recorded logs saved to localStorage.");
       }
       return next;
     });
   };
 
-  // ── Download recorded logs as CSV ────────────────────────────────────────────
-  const downloadLogs = () => {
-    const lines = ["Sensor,Timestamp,Value"];
-    for (const [sensor, records] of Object.entries(recordedLogsRef.current)) {
-      for (const point of records) {
-        lines.push(`${sensor},${point.x.toISOString()},${point.y}`);
-      }
-    }
-    const blob = new Blob([lines.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "recorded_logs.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  // ── Process raw buffers into chart-ready and status data ─────────────────────
   const processedData = useMemo(() => {
     const selectedBuffer: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {
@@ -127,7 +113,6 @@ const {
     return processSensorData(selectedBuffer);
   }, [sensorData, selectedSensors, timeRange]);
 
-  // ── Format last-updated timestamp display ────────────────────────────────────
   const formattedTime = useMemo(
     () =>
       lastUpdated
@@ -136,7 +121,6 @@ const {
     [lastUpdated]
   );
 
-  // ── Count statuses for status cards ──────────────────────────────────────────
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
@@ -152,7 +136,6 @@ const {
     [processedData]
   );
 
-  // ── Sensor group definitions ────────────────────────────────────────────────
   const sensorGroups = {
     Sensor: [
       "ECG",
@@ -174,7 +157,6 @@ const {
     ],
   };
 
-  // ── Toggle sensor selection in sidebar ──────────────────────────────────────
   const toggleSensorSelection = (sensorName: string) => {
     setSelectedSensors((prev) => {
       if (prev.includes(sensorName)) {
@@ -195,13 +177,12 @@ const {
         formattedTime={formattedTime}
         reconnect={reconnect}
         toggleRecording={toggleRecording}
-        onDownload={downloadLogs}
+        onDownload={() => {}}
       />
 
       <StatusCards counts={statusCounts} />
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Sidebar: Sensor list */}
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
             <div
@@ -232,7 +213,6 @@ const {
           ))}
         </div>
 
-        {/* Main: Charts */}
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
             selectedSensors.map((sensorName) => {
@@ -248,7 +228,6 @@ const {
                     <h2 className="text-xl font-semibold text-gray-100">
                       {sensor.displayName} Logs
                     </h2>
-                    <div className="flex items-center space-x-4"></div>
                   </div>
                   <div className="h-64">
                     <SensorChart

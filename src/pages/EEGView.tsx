@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import StatusCards from "../components/MBS/StatusCards";
-import SensorCard from "../components/MBS/SensorCard";
-import SensorChart from "../components/MBS/SensorChart";
-import Header from "../components/MBS/Header";
+import StatusCards from "../components/EEG/StatusCards";
+import SensorCard from "../components/EEG/SensorCard";
+import SensorChart from "../components/EEG/SensorChart";
+import Header from "../components/EEG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingEEG";
 

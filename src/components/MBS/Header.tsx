@@ -1,5 +1,6 @@
 import React from "react";
 import { Play, StopCircle, Download } from "lucide-react";
+import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 
 interface HeaderProps {
   isConnected: boolean;
@@ -8,7 +9,7 @@ interface HeaderProps {
   formattedTime: string;
   reconnect: () => void;
   toggleRecording: () => void;
-  onDownload: () => void; // 🆕 download callback
+  onDownload: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({
@@ -20,12 +21,46 @@ const Header: React.FC<HeaderProps> = ({
   toggleRecording,
   onDownload,
 }) => {
+  const saveLogToFile = async () => {
+    try {
+      const raw = localStorage.getItem("recordedSensorData");
+      if (!raw) {
+        alert("No recorded data found.");
+        return;
+      }
+
+      const parsed: Record<string, { x: string | Date; y: number }[]> = JSON.parse(raw);
+
+      let csv = "Sensor,Timestamp,Value\n";
+      Object.entries(parsed).forEach(([sensor, values]) => {
+        values.forEach(({ x, y }) => {
+          const timeStr = new Date(x).toISOString();
+          csv += `${sensor},${timeStr},${y}\n`;
+        });
+      });
+
+      const fileName = `biosignal-${Date.now()}.csv`;
+
+      const result = await Filesystem.writeFile({
+        path: fileName,
+        data: csv,
+        directory: Directory.Documents, // atau Directory.External
+        encoding: Encoding.UTF8,
+      });
+
+      alert(`✅ CSV file saved to Android:\n${result.uri}`);
+    } catch (error) {
+      console.error("Error saving CSV:", error);
+      alert("❌ Failed to save CSV file.");
+    }
+
+    onDownload(); // notifikasi ke parent jika perlu
+  };
+
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-white">
-          Multi-Biosignals Monitor
-        </h1>
+        <h1 className="text-2xl font-bold text-white">MultiBioSignal Monitor</h1>
         <p className="text-gray-300">
           Monitoring {statusCounts.all} health sensors | Last updated:{" "}
           {formattedTime}
@@ -64,7 +99,7 @@ const Header: React.FC<HeaderProps> = ({
         </button>
 
         <button
-          onClick={onDownload}
+          onClick={saveLogToFile}
           className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg flex items-center"
         >
           <Download className="w-4 h-4 mr-2" />
