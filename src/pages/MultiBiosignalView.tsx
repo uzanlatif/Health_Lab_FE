@@ -229,7 +229,7 @@ const MultiBiosignalView: React.FC = () => {
                       {sensor.displayName} Logs
                     </h2>
                   </div>
-                  <div className="h-64">
+                  <div>
                     <SensorChart
                       data={sensor.chartData}
                       timeRange={timeRange}
