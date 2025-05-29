@@ -53,9 +53,9 @@ const SensorChart: React.FC<SensorChartProps> = ({
       .sort((a, b) => a.x.getTime() - b.x.getTime());
 
     const latestTime = allData.length > 0 ? allData[allData.length - 1].x.getTime() : 0;
-    const tenSecondsAgo = latestTime - 10_000;
+    const fiveSecondsAgo = latestTime - 5_000;
 
-    return allData.filter((d) => d.x.getTime() >= tenSecondsAgo);
+    return allData.filter((d) => d.x.getTime() >= fiveSecondsAgo);
   }, [data]);
 
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
