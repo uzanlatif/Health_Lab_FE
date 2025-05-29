@@ -1,5 +1,6 @@
 import React from 'react';
 import { User } from 'lucide-react';
+import MetaLogo from '../assets/meta_logo-2-removebg-preview.png';
 
 const Navbar: React.FC = () => {
   const ip = import.meta.env.VITE_IP_ADDRESS;
@@ -7,15 +8,17 @@ const Navbar: React.FC = () => {
   return (
     <header
       className="bg-gray-900 shadow-sm border-b border-gray-800"
-      style={{ paddingTop: 'env(safe-area-inset-top)' }} // ✅ Safe area padding for status bar
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       <div className="flex items-center justify-between px-4 py-3">
         {/* Kiri: Logo dan Judul */}
         <div className="flex items-center">
-          <div className="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center mr-3">
-            <span className="text-white font-bold">Pi</span>
-          </div>
-          <h1 className="text-xl font-bold text-white hidden md:block">SensorView</h1>
+          <img
+            src={MetaLogo}
+            alt="Logo"
+            className="mr-3 max-h-10"
+            style={{ height: 'auto', width: 'auto', padding:8}}
+          />
         </div>
 
         {/* Kanan: IP Address + User Icon */}

@@ -14,18 +14,18 @@ export const processSensorData = (
   const result: Record<string, SensorData> = {};
 
   const sensorConfig: Record<string, { displayName: string; unit: string }> = {
-    'LEAD_I': { displayName: 'LEAD_I', unit: 'BPM' },
-    'LEAD_II': { displayName: 'LEAD_II', unit: 'mmHg' },
-    'LEAD_III': { displayName: 'LEAD_III', unit: 'dB' },
+    'LEAD_I': { displayName: 'LEAD_I', unit: 'mV' },
+    'LEAD_II': { displayName: 'LEAD_II', unit: 'mV' },
+    'LEAD_III': { displayName: 'LEAD_III', unit: 'mV' },
     'AVR': { displayName: 'AVR', unit: 'mV' },
     'AVL': { displayName: 'AVL', unit: 'mV' },
-    'AVF': { displayName: 'AVF', unit: 'N' },
-    'V1': { displayName: 'V1', unit: 'L/min' },
-    'V2': { displayName: 'V2', unit: '°C' },
-    'V3': { displayName: 'V3', unit: 'mmHg' },
-    'V4': { displayName: 'V4', unit: '%' },
-    'V5': { displayName: 'V5', unit: 'μV' },
-    'V6': { displayName: 'V6', unit: 'μV' },
+    'AVF': { displayName: 'AVF', unit: 'mV' },
+    'V1': { displayName: 'V1', unit: 'mV' },
+    'V2': { displayName: 'V2', unit: 'mV' },
+    'V3': { displayName: 'V3', unit: 'mV' },
+    'V4': { displayName: 'V4', unit: 'mV' },
+    'V5': { displayName: 'V5', unit: 'mV' },
+    'V6': { displayName: 'V6', unit: 'mV' },
   };
 
   Object.entries(data).forEach(([key, values]) => {
