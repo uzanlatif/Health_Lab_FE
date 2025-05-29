@@ -6,21 +6,6 @@ import Header from "../components/ECG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingECG";
 
-const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  LEAD_I: { min: -200000, max: 200000 },
-  LEAD_II: { min: -200000, max: 200000 },
-  LEAD_III: { min: -200000, max: 200000 },
-  AVR: { min: -200000, max: 200000 },
-  AVL: { min: -200000, max: 200000 },
-  AVF: { min: -200000, max: 200000 },
-  V1: { min: -200000, max: 200000 },
-  V2: { min: -200000, max: 200000 },
-  V3: { min: -200000, max: 200000 },
-  V4: { min: -200000, max: 200000 },
-  V5: { min: -200000, max: 200000 },
-  V6: { min: -200000, max: 200000 },
-};
-
 const ECGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
@@ -68,7 +53,6 @@ const ECGView: React.FC = () => {
       );
       dataBufferRef.current[sensorName] = merged;
 
-      // ✅ Save to recorded logs if recording
       if (isRecording) {
         if (!recordedLogsRef.current[sensorName]) {
           recordedLogsRef.current[sensorName] = [];
@@ -92,29 +76,10 @@ const ECGView: React.FC = () => {
           }));
         }
         localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
-        console.log("✅ ECG logs saved to localStorage.");
+        console.log("✅ Recorded logs saved to localStorage.");
       }
       return next;
     });
-  };
-
-  const downloadLogs = () => {
-    const lines = ["Sensor,Timestamp,Value"];
-    for (const [sensor, records] of Object.entries(recordedLogsRef.current)) {
-      for (const point of records) {
-        lines.push(`${sensor},${point.x.toISOString()},${point.y}`);
-      }
-    }
-    const blob = new Blob([lines.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "recorded_ecg_logs.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const processedData = useMemo(() => {
@@ -138,14 +103,9 @@ const ECGView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter(
-        (s) => s.status === "critical"
-      ).length,
-      warning: Object.values(processedData).filter(
-        (s) => s.status === "warning"
-      ).length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal")
-        .length,
+      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
+      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
     }),
     [processedData]
   );
@@ -177,7 +137,7 @@ const ECGView: React.FC = () => {
         formattedTime={formattedTime}
         reconnect={reconnect}
         toggleRecording={toggleRecording}
-        onDownload={downloadLogs}
+        onDownload={() => {}} // <- Disamakan seperti MultiBiosignalView
       />
 
       <StatusCards counts={statusCounts} />
@@ -229,15 +189,12 @@ const ECGView: React.FC = () => {
                       {sensor.displayName} Logs
                     </h2>
                   </div>
-                  <div>
-                    <SensorChart
-                      data={sensor.chartData}
-                      timeRange={timeRange}
-                      color="#EF4444"
-                      simplified={false}
-                      yAxisLimits={sensorYAxisLimits[sensorName]}
-                    />
-                  </div>
+                  <SensorChart
+                    data={sensor.chartData}
+                    timeRange={timeRange}
+                    color="#EF4444"
+                    simplified={false}
+                  />
                 </div>
               );
             })
@@ -245,9 +202,7 @@ const ECGView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">
-                  Click on a sensor to view detailed logs
-                </p>
+                <p className="text-sm">Click on a sensor to view detailed logs</p>
               </div>
             </div>
           )}

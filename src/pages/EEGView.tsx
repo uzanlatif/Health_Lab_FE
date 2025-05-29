@@ -6,25 +6,6 @@ import Header from "../components/EEG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingEEG";
 
-const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  EEG_1: { min: -200000, max: 200000 },
-  EEG_2: { min: -200000, max: 200000 },
-  EEG_3: { min: -200000, max: 200000 },
-  EEG_4: { min: -200000, max: 200000 },
-  EEG_5: { min: -200000, max: 200000 },
-  EEG_6: { min: -200000, max: 200000 },
-  EEG_7: { min: -200000, max: 200000 },
-  EEG_8: { min: -200000, max: 200000 },
-  EEG_9: { min: -200000, max: 200000 },
-  EEG_10: { min: -200000, max: 200000 },
-  EEG_11: { min: -200000, max: 200000 },
-  EEG_12: { min: -200000, max: 200000 },
-  EEG_13: { min: -200000, max: 200000 },
-  EEG_14: { min: -200000, max: 200000 },
-  EEG_15: { min: -200000, max: 200000 },
-  EEG_16: { min: -200000, max: 200000 },
-};
-
 const EEGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
@@ -72,7 +53,6 @@ const EEGView: React.FC = () => {
       );
       dataBufferRef.current[sensorName] = merged;
 
-      // If recording, also store to recordedLogsRef
       if (isRecording) {
         if (!recordedLogsRef.current[sensorName]) {
           recordedLogsRef.current[sensorName] = [];
@@ -142,23 +122,15 @@ const EEGView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter(
-        (s) => s.status === "critical"
-      ).length,
-      warning: Object.values(processedData).filter(
-        (s) => s.status === "warning"
-      ).length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal")
-        .length,
+      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
+      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
     }),
     [processedData]
   );
 
   const sensorGroups = {
-    Sensor: [
-      "EEG_1", "EEG_2", "EEG_3", "EEG_4", "EEG_5", "EEG_6", "EEG_7", "EEG_8",
-      "EEG_9", "EEG_10", "EEG_11", "EEG_12", "EEG_13", "EEG_14", "EEG_15", "EEG_16",
-    ],
+    Sensor: Array.from({ length: 16 }, (_, i) => `EEG_${i + 1}`),
   };
 
   const toggleSensorSelection = (sensorName: string) => {
@@ -233,15 +205,12 @@ const EEGView: React.FC = () => {
                       {sensor.displayName} Logs
                     </h2>
                   </div>
-                  <div>
-                    <SensorChart
-                      data={sensor.chartData}
-                      timeRange={timeRange}
-                      color="#EF4444"
-                      simplified={false}
-                      yAxisLimits={sensorYAxisLimits[sensorName]}
-                    />
-                  </div>
+                  <SensorChart
+                    data={sensor.chartData}
+                    timeRange={timeRange}
+                    color="#EF4444"
+                    simplified={false}
+                  />
                 </div>
               );
             })
@@ -249,9 +218,7 @@ const EEGView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">
-                  Click on a sensor to view detailed logs
-                </p>
+                <p className="text-sm">Click on a sensor to view detailed logs</p>
               </div>
             </div>
           )}

@@ -32,7 +32,6 @@ interface SensorChartProps {
   timeRange: "1h" | "6h" | "24h";
   color: string;
   simplified?: boolean;
-  yAxisLimits?: { min: number; max: number };
 }
 
 const SensorChart: React.FC<SensorChartProps> = ({
@@ -40,10 +39,9 @@ const SensorChart: React.FC<SensorChartProps> = ({
   timeRange,
   color,
   simplified = false,
-  yAxisLimits,
 }) => {
   const cleanedData = useMemo(() => {
-    return data
+    const allData = data
       .filter(
         (d) =>
           d &&
@@ -53,6 +51,11 @@ const SensorChart: React.FC<SensorChartProps> = ({
           !isNaN(d.y)
       )
       .sort((a, b) => a.x.getTime() - b.x.getTime());
+
+    const latestTime = allData.length > 0 ? allData[allData.length - 1].x.getTime() : 0;
+    const tenSecondsAgo = latestTime - 10_000;
+
+    return allData.filter((d) => d.x.getTime() >= tenSecondsAgo);
   }, [data]);
 
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
@@ -88,11 +91,9 @@ const SensorChart: React.FC<SensorChartProps> = ({
         grid: { display: false },
         time: {
           tooltipFormat: "HH:mm:ss",
-          unit: timeRange === "1h" ? "second" : timeRange === "6h" ? "minute" : "hour",
+          unit: "second",
           displayFormats: {
             second: "HH:mm:ss",
-            minute: "HH:mm",
-            hour: "HH:mm",
           },
         },
         ticks: {
@@ -105,13 +106,11 @@ const SensorChart: React.FC<SensorChartProps> = ({
       y: {
         grid: { color: "#E5E7EB" },
         ticks: { font: { size: 10 } },
-        min: yAxisLimits?.min,
-        max: yAxisLimits?.max,
       },
     },
     animation: false,
     normalized: true,
-  }), [simplified, timeRange, yAxisLimits]);
+  }), [simplified]);
 
   if (cleanedData.length === 0) {
     return <div className="text-gray-400 text-sm px-2 py-1">No data available.</div>;
