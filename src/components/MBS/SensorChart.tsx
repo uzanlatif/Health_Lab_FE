@@ -32,7 +32,6 @@ interface SensorChartProps {
   timeRange: "1h" | "6h" | "24h";
   color: string;
   simplified?: boolean;
-  yAxisLimits?: { min: number; max: number };
 }
 
 const SensorChart: React.FC<SensorChartProps> = ({
@@ -40,7 +39,6 @@ const SensorChart: React.FC<SensorChartProps> = ({
   timeRange,
   color,
   simplified = false,
-  yAxisLimits,
 }) => {
   const cleanedData = useMemo(() => {
     return data
@@ -105,13 +103,12 @@ const SensorChart: React.FC<SensorChartProps> = ({
       y: {
         grid: { color: "#E5E7EB" },
         ticks: { font: { size: 10 } },
-        min: yAxisLimits?.min,
-        max: yAxisLimits?.max,
+        // ❌ No min/max so Y-axis is dynamic
       },
     },
     animation: false,
     normalized: true,
-  }), [simplified, timeRange, yAxisLimits]);
+  }), [simplified, timeRange]);
 
   if (cleanedData.length === 0) {
     return <div className="text-gray-400 text-sm px-2 py-1">No data available.</div>;

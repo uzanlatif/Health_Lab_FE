@@ -6,25 +6,6 @@ import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
 
-const sensorYAxisLimits: Record<string, { min: number; max: number }> = {
-  ECG: { min: -200000, max: 200000 },
-  PPG: { min: -200000, max: 200000 },
-  PCG: { min: -200000, max: 200000 },
-  EMG1: { min: -200000, max: 200000 },
-  EMG2: { min: -200000, max: 200000 },
-  MYOMETER: { min: -200000, max: 200000 },
-  SPIRO: { min: -200000, max: 200000 },
-  TEMPERATURE: { min: -200000, max: 200000 },
-  NIBP: { min: -200000, max: 200000 },
-  OXYGEN: { min: -200000, max: 200000 },
-  "EEG CH11": { min: -200000, max: 200000 },
-  "EEG CH12": { min: -200000, max: 200000 },
-  "EEG CH13": { min: -200000, max: 200000 },
-  "EEG CH14": { min: -200000, max: 200000 },
-  "EEG CH15": { min: -200000, max: 200000 },
-  "EEG CH16": { min: -200000, max: 200000 },
-};
-
 const MultiBiosignalView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
@@ -72,7 +53,6 @@ const MultiBiosignalView: React.FC = () => {
       );
       dataBufferRef.current[sensorName] = merged;
 
-      // Jika recording aktif, simpan juga ke recordedLogsRef
       if (isRecording) {
         if (!recordedLogsRef.current[sensorName]) {
           recordedLogsRef.current[sensorName] = [];
@@ -88,7 +68,6 @@ const MultiBiosignalView: React.FC = () => {
       if (next) {
         recordedLogsRef.current = {};
       } else {
-        // Simpan hasil rekaman ke localStorage
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
           exportData[key] = records.map(({ x, y }) => ({
@@ -124,36 +103,19 @@ const MultiBiosignalView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter(
-        (s) => s.status === "critical"
-      ).length,
-      warning: Object.values(processedData).filter(
-        (s) => s.status === "warning"
-      ).length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal")
-        .length,
+      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
+      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
     }),
     [processedData]
   );
 
   const sensorGroups = {
     Sensor: [
-      "ECG",
-      "PPG",
-      "PCG",
-      "EMG1",
-      "EMG2",
-      "MYOMETER",
-      "SPIRO",
-      "TEMPERATURE",
-      "NIBP",      
-      "OXYGEN",
-      "EEG CH11",
-      "EEG CH12",
-      "EEG CH13",
-      "EEG CH14",
-      "EEG CH15",
-      "EEG CH16",
+      "ECG", "PPG", "PCG", "EMG1", "EMG2", "MYOMETER",
+      "SPIRO", "TEMPERATURE", "NIBP", "OXYGEN",
+      "EEG CH11", "EEG CH12", "EEG CH13", "EEG CH14",
+      "EEG CH15", "EEG CH16",
     ],
   };
 
@@ -229,15 +191,12 @@ const MultiBiosignalView: React.FC = () => {
                       {sensor.displayName} Logs
                     </h2>
                   </div>
-                  <div>
-                    <SensorChart
-                      data={sensor.chartData}
-                      timeRange={timeRange}
-                      color="#EF4444"
-                      simplified={false}
-                      yAxisLimits={sensorYAxisLimits[sensorName]}
-                    />
-                  </div>
+                  <SensorChart
+                    data={sensor.chartData}
+                    timeRange={timeRange}
+                    color="#EF4444"
+                    simplified={false}
+                  />
                 </div>
               );
             })
@@ -245,9 +204,7 @@ const MultiBiosignalView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">
-                  Click on a sensor to view detailed logs
-                </p>
+                <p className="text-sm">Click on a sensor to view detailed logs</p>
               </div>
             </div>
           )}
