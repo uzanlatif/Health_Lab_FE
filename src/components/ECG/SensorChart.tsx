@@ -32,6 +32,30 @@ interface SensorChartProps {
   timeRange: "1h" | "6h" | "24h";
   color: string;
   simplified?: boolean;
+  notch60Hz?: boolean;
+}
+
+function applyNotch60HzFilter(data: { x: Date; y: number }[], sampleRate: number): { x: Date; y: number }[] {
+  const filtered: { x: Date; y: number }[] = [];
+  const notchFreq = 60;
+  const r = 0.95;
+  const omega = 2 * Math.PI * notchFreq / sampleRate;
+  const a0 = 1;
+  const a1 = -2 * Math.cos(omega);
+  const a2 = 1;
+  const b1 = -2 * r * Math.cos(omega);
+  const b2 = r * r;
+
+  let y1 = 0, y2 = 0, x1 = 0, x2 = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    const x0 = data[i].y;
+    const y0 = a0 * x0 + a1 * x1 + a2 * x2 - b1 * y1 - b2 * y2;
+    filtered.push({ x: data[i].x, y: y0 });
+    x2 = x1; x1 = x0; y2 = y1; y1 = y0;
+  }
+
+  return filtered;
 }
 
 const SensorChart: React.FC<SensorChartProps> = ({
@@ -39,24 +63,25 @@ const SensorChart: React.FC<SensorChartProps> = ({
   timeRange,
   color,
   simplified = false,
+  notch60Hz = false,
 }) => {
   const cleanedData = useMemo(() => {
     const allData = data
-      .filter(
-        (d) =>
-          d &&
-          d.x instanceof Date &&
-          !isNaN(d.x.getTime()) &&
-          typeof d.y === "number" &&
-          !isNaN(d.y)
-      )
+      .filter(d => d && d.x instanceof Date && !isNaN(d.x.getTime()) && typeof d.y === "number" && !isNaN(d.y))
       .sort((a, b) => a.x.getTime() - b.x.getTime());
 
     const latestTime = allData.length > 0 ? allData[allData.length - 1].x.getTime() : 0;
-    const tenSecondsAgo = latestTime - 10_000;
+    const fiveSecondsAgo = latestTime - 5_000;
+    let windowed = allData.filter(d => d.x.getTime() >= fiveSecondsAgo);
 
-    return allData.filter((d) => d.x.getTime() >= tenSecondsAgo);
-  }, [data]);
+    if (notch60Hz && windowed.length > 1) {
+      const dt = (windowed[1].x.getTime() - windowed[0].x.getTime()) / 1000;
+      const sampleRate = dt > 0 ? 1 / dt : 250;
+      windowed = applyNotch60HzFilter(windowed, sampleRate);
+    }
+
+    return windowed;
+  }, [data, notch60Hz]);
 
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
     datasets: [
@@ -92,9 +117,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
         time: {
           tooltipFormat: "HH:mm:ss",
           unit: "second",
-          displayFormats: {
-            second: "HH:mm:ss",
-          },
+          displayFormats: { second: "HH:mm:ss" },
         },
         ticks: {
           maxRotation: 0,

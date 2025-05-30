@@ -10,6 +10,7 @@ const ECGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
+  const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
 
   const websocketUrl = useMemo(() => {
     const port = import.meta.env.VITE_PORT_ECG;
@@ -82,6 +83,24 @@ const ECGView: React.FC = () => {
     });
   };
 
+  const toggleSensorSelection = (sensorName: string) => {
+    setSelectedSensors((prev) => {
+      if (prev.includes(sensorName)) {
+        delete dataBufferRef.current[sensorName];
+        return prev.filter((name) => name !== sensorName);
+      } else {
+        return [...prev, sensorName];
+      }
+    });
+  };
+
+  const toggleNotchFilter = (sensorName: string) => {
+    setNotchEnabledSensors((prev) => ({
+      ...prev,
+      [sensorName]: !prev[sensorName],
+    }));
+  };
+
   const processedData = useMemo(() => {
     const selectedBuffer: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {
@@ -117,17 +136,6 @@ const ECGView: React.FC = () => {
     ],
   };
 
-  const toggleSensorSelection = (sensorName: string) => {
-    setSelectedSensors((prev) => {
-      if (prev.includes(sensorName)) {
-        delete dataBufferRef.current[sensorName];
-        return prev.filter((name) => name !== sensorName);
-      } else {
-        return [...prev, sensorName];
-      }
-    });
-  };
-
   return (
     <div className="space-y-6 text-gray-100">
       <Header
@@ -137,7 +145,7 @@ const ECGView: React.FC = () => {
         formattedTime={formattedTime}
         reconnect={reconnect}
         toggleRecording={toggleRecording}
-        onDownload={() => {}} // <- Disamakan seperti MultiBiosignalView
+        onDownload={() => {}}
       />
 
       <StatusCards counts={statusCounts} />
@@ -188,12 +196,22 @@ const ECGView: React.FC = () => {
                     <h2 className="text-xl font-semibold text-gray-100">
                       {sensor.displayName} Logs
                     </h2>
+                    <label className="text-sm text-gray-300 flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={!!notchEnabledSensors[sensorName]}
+                        onChange={() => toggleNotchFilter(sensorName)}
+                      />
+                      60Hz Notch Filter
+                    </label>
                   </div>
+
                   <SensorChart
                     data={sensor.chartData}
                     timeRange={timeRange}
                     color="#EF4444"
                     simplified={false}
+                    notch60Hz={!!notchEnabledSensors[sensorName]}
                   />
                 </div>
               );
