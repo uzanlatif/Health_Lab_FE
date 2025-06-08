@@ -33,6 +33,7 @@ interface SensorChartProps {
   color: string;
   simplified?: boolean;
   notch60Hz?: boolean;
+  compactView?: boolean; // ✅ Added support for compact view
 }
 
 function applyNotch60HzFilter(data: { x: Date; y: number }[], sampleRate: number): { x: Date; y: number }[] {
@@ -64,6 +65,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
   color,
   simplified = false,
   notch60Hz = false,
+  compactView = false,
 }) => {
   const cleanedData = useMemo(() => {
     const allData = data
@@ -140,7 +142,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
   }
 
   return (
-    <div style={{ height: "150px" }}>
+    <div style={{ height: compactView ? "100px" : "150px" }}>
       <Line data={chartData} options={chartOptions} />
     </div>
   );

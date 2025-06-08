@@ -5,18 +5,20 @@ import SensorChart from "../components/ECG/SensorChart";
 import Header from "../components/ECG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingECG";
+import { useWebSocketConfig } from "../context/WebSocketConfigContext";
 
 const ECGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
-  const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
+  const [notchEnabledSensors, setNotchEnabledSensors] = useState<
+    Record<string, boolean>
+  >({});
 
-  const websocketUrl = useMemo(() => {
-    const port = import.meta.env.VITE_PORT_ECG;
-    const ip = import.meta.env.VITE_IP_ADDRESS;
-    return `ws://${ip}:${port}`;
-  }, []);
+  const { ip } = useWebSocketConfig();
+  const port = import.meta.env.VITE_PORT_ECG;
+
+  const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
   const {
     data: sensorData,
@@ -122,17 +124,32 @@ const ECGView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
-      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
+      critical: Object.values(processedData).filter(
+        (s) => s.status === "critical"
+      ).length,
+      warning: Object.values(processedData).filter(
+        (s) => s.status === "warning"
+      ).length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal")
+        .length,
     }),
     [processedData]
   );
 
   const sensorGroups = {
     Sensor: [
-      "LEAD_I", "LEAD_II", "LEAD_III", "AVR", "AVL", "AVF",
-      "V1", "V2", "V3", "V4", "V5", "V6",
+      "LEAD_I",
+      "LEAD_II",
+      "LEAD_III",
+      "AVR",
+      "AVL",
+      "AVF",
+      "V1",
+      "V2",
+      "V3",
+      "V4",
+      "V5",
+      "V6",
     ],
   };
 
@@ -220,7 +237,9 @@ const ECGView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">Click on a sensor to view detailed logs</p>
+                <p className="text-sm">
+                  Click on a sensor to view detailed logs
+                </p>
               </div>
             </div>
           )}

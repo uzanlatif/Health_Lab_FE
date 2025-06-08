@@ -12,10 +12,10 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
+  const [compactView, setCompactView] = useState(true); // ✅ Toggle compact vs expanded
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_MBS;
-
   const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
   const {
@@ -150,6 +150,15 @@ const MultiBiosignalView: React.FC = () => {
         onDownload={() => {}}
       />
 
+      <div className="flex justify-end">
+        <button
+          className="text-sm bg-gray-700 px-3 py-1 rounded hover:bg-gray-600 transition"
+          onClick={() => setCompactView((prev) => !prev)}
+        >
+          {compactView ? "🔎 Expand View" : "📊 Compact View"}
+        </button>
+      </div>
+
       <StatusCards counts={statusCounts} />
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -185,39 +194,45 @@ const MultiBiosignalView: React.FC = () => {
 
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
-            selectedSensors.map((sensorName) => {
-              const sensor = processedData[sensorName];
-              if (!sensor || !Array.isArray(sensor.chartData)) return null;
+            <div
+              className={
+                compactView
+                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                  : "flex flex-col gap-4"
+              }
+            >
+              {selectedSensors.map((sensorName) => {
+                const sensor = processedData[sensorName];
+                if (!sensor || !Array.isArray(sensor.chartData)) return null;
 
-              return (
-                <div
-                  key={sensorName}
-                  className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600 mb-4"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-100">
-                      {sensor.displayName} Logs
-                    </h2>
-                    <label className="text-sm text-gray-300 flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={!!notchEnabledSensors[sensorName]}
-                        onChange={() => toggleNotchFilter(sensorName)}
-                      />
-                      60Hz Notch Filter
-                    </label>
+                return (
+                  <div
+                    key={sensorName}
+                    className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-lg font-semibold text-gray-100 truncate">{sensor.displayName} Logs</h2>
+                      <label className="text-sm text-gray-300 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!notchEnabledSensors[sensorName]}
+                          onChange={() => toggleNotchFilter(sensorName)}
+                        />
+                        60Hz Notch Filter
+                      </label>
+                    </div>
+                    <SensorChart
+                      data={sensor.chartData}
+                      timeRange={timeRange}
+                      color="#EF4444"
+                      simplified={compactView}
+                      notch60Hz={!!notchEnabledSensors[sensorName]}
+                      compactView={compactView}
+                    />
                   </div>
-
-                  <SensorChart
-                    data={sensor.chartData}
-                    timeRange={timeRange}
-                    color="#EF4444"
-                    simplified={false}
-                    notch60Hz={!!notchEnabledSensors[sensorName]}
-                  />
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           ) : (
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">

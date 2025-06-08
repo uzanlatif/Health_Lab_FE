@@ -5,17 +5,17 @@ import SensorChart from "../components/EEG/SensorChart";
 import Header from "../components/EEG/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingEEG";
+import { useWebSocketConfig } from "../context/WebSocketConfigContext";
 
 const EEGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
 
-  const websocketUrl = useMemo(() => {
-    const port = import.meta.env.VITE_PORT_EEG;
-    const ip = import.meta.env.VITE_IP_ADDRESS;
-    return `ws://${ip}:${port}`;
-  }, []);
+  const { ip } = useWebSocketConfig();
+  const port = import.meta.env.VITE_PORT_EEG;
+
+  const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
   const {
     data: sensorData,
@@ -122,9 +122,14 @@ const EEGView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
-      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
+      critical: Object.values(processedData).filter(
+        (s) => s.status === "critical"
+      ).length,
+      warning: Object.values(processedData).filter(
+        (s) => s.status === "warning"
+      ).length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal")
+        .length,
     }),
     [processedData]
   );
@@ -218,7 +223,9 @@ const EEGView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">Click on a sensor to view detailed logs</p>
+                <p className="text-sm">
+                  Click on a sensor to view detailed logs
+                </p>
               </div>
             </div>
           )}

@@ -1,4 +1,4 @@
-import React, { useState,useMemo } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   BarChart2,
@@ -7,47 +7,21 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import axios from "axios";
 import LogoImage from "../assets/wa.jpg";
-import { useWebSocketConfig } from "../context/WebSocketConfigContext"; // ✅ Import context
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<string | null>(null);
-
-  const { ip } = useWebSocketConfig(); // ✅ Use context
-  const port = import.meta.env.VITE_PORT_CONTROL;
-
-  const API_URL = useMemo(() => {
-    if (!ip || !port) {
-      console.warn("Missing IP or port for API");
-      return "";
-    }
-    return `http://${ip}:${port}`;
-  }, [ip, port]);
 
   const navItems = [
-    { label: "MultiBioSignal", icon: BarChart2, path: "/mbs", script: "server_mbs.py" },
-    { label: "12-Leads ECG", icon: Cpu, path: "/ecg", script: "server_ecg.py" },
-    { label: "16-Channels EEG", icon: Activity, path: "/eeg", script: "server_eeg.py" },
+    { label: "MultiBioSignal", icon: BarChart2, path: "/mbs" },
+    { label: "12-Leads ECG", icon: Cpu, path: "/ecg" },
+    { label: "16-Channels EEG", icon: Activity, path: "/eeg" },
   ];
 
-  const runAndNavigate = async (item: (typeof navItems)[0]) => {
-    if (!API_URL) {
-      alert("❌ Invalid API configuration.");
-      return;
-    }
-
-    try {
-      await axios.post(`${API_URL}/run`, { script_name: item.script });
-      setSelectedServer(item.script);
-      navigate(item.path);
-    } catch (err) {
-      alert("❌ Failed to start server");
-      console.error("API call failed:", err);
-    }
+  const navigateTo = (item: (typeof navItems)[0]) => {
+    navigate(item.path);
   };
 
   return (
@@ -82,7 +56,7 @@ const Sidebar: React.FC = () => {
           return (
             <div
               key={index}
-              onClick={() => runAndNavigate(item)}
+              onClick={() => navigateTo(item)}
               className={`flex items-center px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${
                 isActive
                   ? "bg-blue-600 text-white"
