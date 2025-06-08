@@ -2,6 +2,8 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+app.disableHardwareAcceleration(); // ⛔️ Nonaktifkan akselerasi GPU
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
