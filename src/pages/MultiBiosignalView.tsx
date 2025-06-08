@@ -5,6 +5,7 @@ import SensorChart from "../components/MBS/SensorChart";
 import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingMBS";
+import { useWebSocketConfig } from "../context/WebSocketConfigContext";
 
 const MultiBiosignalView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
@@ -12,11 +13,10 @@ const MultiBiosignalView: React.FC = () => {
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
 
-  const websocketUrl = useMemo(() => {
-    const port = import.meta.env.VITE_PORT_MBS;
-    const ip = import.meta.env.VITE_IP_ADDRESS;
-    return `wss://${ip}:${port}`;
-  }, []);
+  const { ip } = useWebSocketConfig();
+  const port = import.meta.env.VITE_PORT_MBS;
+
+  const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
   const {
     data: sensorData,

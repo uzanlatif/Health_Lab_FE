@@ -20,24 +20,40 @@ const useWebSocket = (url: string): WebSocketHookResult => {
   const [data, setData] = useState<WebSocketData>({});
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isConnected, setIsConnected] = useState<boolean>(false);
+
   const socketRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<number | null>(null);
 
-  const isValidWsUrl = (url: string) => {
-    // Accept both ws:// and wss:// with IP or domain and port
-    return /^(ws|wss):\/\/[a-zA-Z0-9.-]+:\d+$/.test(url);
+  const isValidWsUrl = (url: string) => /^(ws|wss):\/\/[a-zA-Z0-9.-]+:\d+$/.test(url);
+
+  const cleanupSocket = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    if (socketRef.current) {
+      socketRef.current.onopen = null;
+      socketRef.current.onmessage = null;
+      socketRef.current.onclose = null;
+      socketRef.current.onerror = null;
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+    setIsConnected(false);
   };
 
   const connect = useCallback(() => {
-    console.log("🌐 WebSocket URL:", url);
+    console.log("🌐 Connecting to:", url);
+    cleanupSocket();
 
     if (!url || !isValidWsUrl(url)) {
-      console.warn("⚠️ Skipping WebSocket connect: invalid or empty URL", url);
+      console.warn("⚠️ Invalid WebSocket URL:", url);
       return;
     }
 
     try {
       const socket = new WebSocket(url);
+      socketRef.current = socket;
 
       socket.onopen = () => {
         console.log("🔌 WebSocket connected");
@@ -47,71 +63,41 @@ const useWebSocket = (url: string): WebSocketHookResult => {
       socket.onmessage = (event) => {
         try {
           const receivedData: WebSocketData = JSON.parse(event.data);
-
           if (typeof receivedData === 'object' && receivedData !== null) {
-            for (const sensor in receivedData) {
-              const samples = receivedData[sensor];
-              if (!Array.isArray(samples)) {
-                throw new TypeError(`Invalid data format for ${sensor}`);
-              }
-            }
-
             setData(receivedData);
             setLastUpdated(new Date());
-            console.log("📥 Received sensorData", receivedData);
           }
-        } catch (error) {
-          console.error('❌ Error parsing data:', error);
+        } catch (err) {
+          console.error("❌ Error parsing message:", err);
         }
       };
 
       socket.onclose = () => {
         console.log("🔌 WebSocket disconnected");
         setIsConnected(false);
-
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
-
-        reconnectTimeoutRef.current = window.setTimeout(() => {
-          console.log("🔁 Reconnecting...");
-          connect();
-        }, 5000);
+        reconnectTimeoutRef.current = window.setTimeout(connect, 5000);
       };
 
-      socket.onerror = (error) => {
-        console.error("⚠️ WebSocket error:", error);
+      socket.onerror = (err) => {
+        console.error("⚠️ WebSocket error:", err);
         socket.close();
       };
-
-      socketRef.current = socket;
-
-      return () => {
-        socket.close();
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current);
-        }
-      };
-    } catch (error) {
-      console.error("⚠️ Connection error:", error);
+    } catch (err) {
+      console.error("🚨 Failed to create WebSocket:", err);
     }
-  }, [url]);
+  }, [url]); // ✅ url sebagai dependency
 
   const reconnect = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
+    console.log("🔁 Manual reconnect...");
     connect();
   }, [connect]);
 
   useEffect(() => {
-    const cleanup = connect();
+    connect();
     return () => {
-      if (cleanup) cleanup();
-      if (socketRef.current) socketRef.current.close();
-      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+      cleanupSocket();
     };
-  }, [connect]);
+  }, [connect]); // ✅ ini akan rerun saat url berubah
 
   return { data, lastUpdated, reconnect, isConnected };
 };

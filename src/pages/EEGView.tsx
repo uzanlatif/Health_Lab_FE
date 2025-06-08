@@ -14,7 +14,7 @@ const EEGView: React.FC = () => {
   const websocketUrl = useMemo(() => {
     const port = import.meta.env.VITE_PORT_EEG;
     const ip = import.meta.env.VITE_IP_ADDRESS;
-    return `wss://${ip}:${port}`;
+    return `ws://${ip}:${port}`;
   }, []);
 
   const {

@@ -7,32 +7,21 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import axios from "axios";
 import LogoImage from "../assets/wa.jpg";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selectedServer, setSelectedServer] = useState<string | null>(null);
-
-  const API_URL = "https://10.42.0.1:8000"; // Ganti dengan IP Raspberry Pi
 
   const navItems = [
-    { label: "MultiBioSignal", icon: BarChart2, path: "/mbs", script: "server_mbs_ssl.py" },
-    { label: "12-Leads ECG", icon: Cpu, path: "/ecg", script: "server_ecg_ssl.py" },
-    { label: "16-Channels EEG", icon: Activity, path: "/eeg", script: "server_eeg_ssl.py" },
+    { label: "MultiBioSignal", icon: BarChart2, path: "/mbs" },
+    { label: "12-Leads ECG", icon: Cpu, path: "/ecg" },
+    { label: "16-Channels EEG", icon: Activity, path: "/eeg" },
   ];
 
-  const runAndNavigate = async (item: (typeof navItems)[0]) => {
-    try {
-      await axios.post(`${API_URL}/run`, { script_name: item.script });
-      setSelectedServer(item.script);
-      navigate(item.path);
-    } catch (err) {
-      alert("❌ Failed to start server");
-      console.error(err);
-    }
+  const navigateTo = (item: (typeof navItems)[0]) => {
+    navigate(item.path);
   };
 
   return (
@@ -60,14 +49,14 @@ const Sidebar: React.FC = () => {
         </button>
       </div>
 
-      {/* Navigation (auto-run server & navigate) */}
+      {/* Navigation */}
       <nav className="flex-1 pt-4 space-y-1">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (
             <div
               key={index}
-              onClick={() => runAndNavigate(item)}
+              onClick={() => navigateTo(item)}
               className={`flex items-center px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${
                 isActive
                   ? "bg-blue-600 text-white"
