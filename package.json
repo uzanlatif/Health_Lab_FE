@@ -2,7 +2,7 @@
   "name": "sensorview-dashboard",
   "private": true,
   "version": "0.1.0",
-  "main": "electron.js",
+  "main": "electron.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",

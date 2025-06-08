@@ -3,10 +3,11 @@ import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: './', // ← ✅ Tambahkan baris ini
   plugins: [react()],
   server: {
-    host: true,         // Ini akan membuat server bisa diakses lewat IP LAN
-    port: 5173,         // Ganti jika perlu, default-nya 5173
-    open: false         // Tidak otomatis membuka browser saat server jalan
+    host: true,
+    port: 5173,
+    open: false
   }
 })
