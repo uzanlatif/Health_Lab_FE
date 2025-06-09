@@ -2,18 +2,18 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-app.disableHardwareAcceleration(); // ⛔️ Nonaktifkan akselerasi GPU
+app.disableHardwareAcceleration(); // Nonaktifkan akselerasi GPU
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    fullscreen: true,   // Fullscreen true supaya layar penuh
+    frame: false,       // Hapus frame (title bar dan border)
     webPreferences: {
-      contextIsolation: true, // security best practice
+      contextIsolation: true, // Security best practice
     },
   });
 
-  // Load Vite-built frontend from `dist/index.html`
+  // Load file index.html hasil build Vite
   win.loadFile(path.join(__dirname, 'dist/index.html'));
 }
 
