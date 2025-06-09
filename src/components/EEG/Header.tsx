@@ -1,6 +1,5 @@
 import React from "react";
 import { Play, StopCircle, Download } from "lucide-react";
-import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
 
 interface HeaderProps {
   isConnected: boolean;
@@ -39,28 +38,31 @@ const Header: React.FC<HeaderProps> = ({
         });
       });
 
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
       const fileName = `biosignal-${Date.now()}.csv`;
+      link.href = url;
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
-      const result = await Filesystem.writeFile({
-        path: fileName,
-        data: csv,
-        directory: Directory.Documents, // atau Directory.External
-        encoding: Encoding.UTF8,
-      });
-
-      alert(`✅ CSV file saved to Android:\n${result.uri}`);
+      alert(`✅ CSV file downloaded as: ${fileName}`);
     } catch (error) {
       console.error("Error saving CSV:", error);
-      alert("❌ Failed to save CSV file.");
+      alert("❌ Failed to download CSV file.");
     }
 
-    onDownload(); // notifikasi ke parent jika perlu
+    onDownload(); // Optional callback after download
   };
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-white">16 Channel EEG Monitor</h1>
+        <h1 className="text-2xl font-bold text-white">MultiBioSignal Monitor</h1>
         <p className="text-gray-300">
           Monitoring {statusCounts.all} health sensors | Last updated:{" "}
           {formattedTime}

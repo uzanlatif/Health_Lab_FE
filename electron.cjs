@@ -2,19 +2,28 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
-app.disableHardwareAcceleration(); // ⛔️ Nonaktifkan akselerasi GPU
+app.disableHardwareAcceleration(); // ⛔️ Disable GPU acceleration
 
 function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    fullscreen: true,             // ✅ Start in fullscreen mode
+    frame: false,                 // 🖼️ Remove window frame (optional for kiosk)
+    resizable: false,             // 🚫 Prevent resizing
+    fullscreenable: false,        // 🚫 Prevent user from exiting fullscreen
+    autoHideMenuBar: true,        // 🧼 Hide menu bar
     webPreferences: {
-      contextIsolation: true, // security best practice
+      contextIsolation: true,     // ✅ Security best practice
     },
   });
 
-  // Load Vite-built frontend from `dist/index.html`
   win.loadFile(path.join(__dirname, 'dist/index.html'));
 }
 
 app.whenReady().then(createWindow);
+
+// Exit on all windows closed (except macOS)
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
