@@ -6,8 +6,7 @@ app.disableHardwareAcceleration();
 
 function createWindow() {
   const win = new BrowserWindow({
-    frame: false,
-    show: false, // jangan tampilkan sebelum siap
+    frame: true, // tampilkan title bar agar bisa drag / kontrol
     webPreferences: {
       contextIsolation: true,
     },
@@ -16,10 +15,8 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'dist/index.html'));
 
   win.once('ready-to-show', () => {
-    win.maximize();
-    win.setFullScreen(true);
+    win.maximize(); // hanya maximize, bukan fullscreen
     win.show();
-    console.log('Window bounds:', win.getBounds());
   });
 }
 
