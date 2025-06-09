@@ -9,7 +9,7 @@ import WelcomeView from './pages/WelcomeView';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen w-screen bg-gray-50 flex flex-col">
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<WelcomeView />} />
