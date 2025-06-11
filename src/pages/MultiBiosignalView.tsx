@@ -11,7 +11,9 @@ const MultiBiosignalView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
-  const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
+  const [notchEnabledSensors, setNotchEnabledSensors] = useState<
+    Record<string, boolean>
+  >({});
   const [compactView, setCompactView] = useState(true);
 
   const { ip } = useWebSocketConfig();
@@ -72,7 +74,7 @@ const MultiBiosignalView: React.FC = () => {
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
           exportData[key] = records.map(({ x, y }) => ({
-            x: x.toISOString(),
+            x: new Date(x).toISOString(),
             y,
           }));
         }
@@ -122,38 +124,55 @@ const MultiBiosignalView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
-      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
+      critical: Object.values(processedData).filter(
+        (s) => s.status === "critical"
+      ).length,
+      warning: Object.values(processedData).filter(
+        (s) => s.status === "warning"
+      ).length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal")
+        .length,
     }),
     [processedData]
   );
 
   const sensorColors: Record<string, string> = {
-    ECG: "green",
-    PPG: "blue",
-    PCG: "red",
-    EMG1: "purple",
-    EMG2: "violet",
-    MYOMETER: "darkgray",
-    SPIRO: "aqua",
-    TEMPERATURE: "orange",
-    NIBP: "white",
-    OXYGEN: "lightgray",
-    "EEG CH11": "violet",
-    "EEG CH12": "violet",
-    "EEG CH13": "violet",
-    "EEG CH14": "violet",
-    "EEG CH15": "violet",
-    "EEG CH16": "violet",
+    ECG: "#10B981", // Emerald green
+    PPG: "#3B82F6", // Blue
+    PCG: "#EF4444", // Red
+    EMG1: "#8B5CF6", // Violet
+    EMG2: "#A855F7", // Light violet
+    MYOMETER: "#6B7280", // Cool gray
+    SPIRO: "#06B6D4", // Cyan
+    TEMPERATURE: "#F97316", // Orange
+    NIBP: "#FACC15", // Yellow
+    OXYGEN: "#60A5FA", // Light blue
+    "EEG CH11": "#C084FC", // Soft violet
+    "EEG CH12": "#D946EF", // Pink-violet
+    "EEG CH13": "#A78BFA", // Soft purple
+    "EEG CH14": "#F472B6", // Rose
+    "EEG CH15": "#FB7185", // Red-pink
+    "EEG CH16": "#F87171", // Coral red
   };
 
   const sensorGroups = {
     Sensor: [
-      "ECG", "PPG", "PCG", "EMG1", "EMG2", "MYOMETER",
-      "SPIRO", "TEMPERATURE", "NIBP", "OXYGEN",
-      "EEG CH11", "EEG CH12", "EEG CH13", "EEG CH14",
-      "EEG CH15", "EEG CH16",
+      "ECG",
+      "PPG",
+      "PCG",
+      "EMG1",
+      "EMG2",
+      "MYOMETER",
+      "SPIRO",
+      "TEMPERATURE",
+      "NIBP",
+      "OXYGEN",
+      "EEG CH11",
+      "EEG CH12",
+      "EEG CH13",
+      "EEG CH14",
+      "EEG CH15",
+      "EEG CH16",
     ],
   };
 
@@ -230,7 +249,9 @@ const MultiBiosignalView: React.FC = () => {
                     className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600"
                   >
                     <div className="flex justify-between items-center mb-2">
-                      <h2 className="text-lg font-semibold text-gray-100 truncate">{sensor.displayName} Logs</h2>
+                      <h2 className="text-lg font-semibold text-gray-100 truncate">
+                        {sensor.displayName} Logs
+                      </h2>
                       <label className="text-sm text-gray-300 flex items-center gap-2">
                         <input
                           type="checkbox"
@@ -256,7 +277,9 @@ const MultiBiosignalView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">Click on a sensor to view detailed logs</p>
+                <p className="text-sm">
+                  Click on a sensor to view detailed logs
+                </p>
               </div>
             </div>
           )}
