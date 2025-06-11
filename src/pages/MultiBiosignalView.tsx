@@ -72,7 +72,7 @@ const MultiBiosignalView: React.FC = () => {
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
           exportData[key] = records.map(({ x, y }) => ({
-            x: new Date(x).toISOString(),
+            x: x.toISOString(),
             y,
           }));
         }
@@ -130,16 +130,22 @@ const MultiBiosignalView: React.FC = () => {
   );
 
   const sensorColors: Record<string, string> = {
-    ECG: "#3B82F6",      // biru
-    PPG: "#EF4444",      // merah
-    EMG1: "#F59E0B",     // kuning
-    EMG2: "#FBBF24",     // kuning muda
-    MYOMETER: "#8B5CF6", // ungu
-    SPIRO: "#14B8A6",    // cyan
-    TEMPERATURE: "#F97316", // oranye
-    NIBP: "#10B981",     // hijau
-    OXYGEN: "#22C55E",   // hijau terang
-    PCG: "#6366F1",      // indigo
+    ECG: "green",
+    PPG: "blue",
+    PCG: "red",
+    EMG1: "purple",
+    EMG2: "violet",
+    MYOMETER: "darkgray",
+    SPIRO: "aqua",
+    TEMPERATURE: "orange",
+    NIBP: "white",
+    OXYGEN: "lightgray",
+    "EEG CH11": "violet",
+    "EEG CH12": "violet",
+    "EEG CH13": "violet",
+    "EEG CH14": "violet",
+    "EEG CH15": "violet",
+    "EEG CH16": "violet",
   };
 
   const sensorGroups = {
