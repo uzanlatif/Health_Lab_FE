@@ -12,7 +12,7 @@ const MultiBiosignalView: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
-  const [compactView, setCompactView] = useState(true); // ✅ Toggle compact vs expanded
+  const [compactView, setCompactView] = useState(true);
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_MBS;
@@ -129,6 +129,19 @@ const MultiBiosignalView: React.FC = () => {
     [processedData]
   );
 
+  const sensorColors: Record<string, string> = {
+    ECG: "#3B82F6",      // biru
+    PPG: "#EF4444",      // merah
+    EMG1: "#F59E0B",     // kuning
+    EMG2: "#FBBF24",     // kuning muda
+    MYOMETER: "#8B5CF6", // ungu
+    SPIRO: "#14B8A6",    // cyan
+    TEMPERATURE: "#F97316", // oranye
+    NIBP: "#10B981",     // hijau
+    OXYGEN: "#22C55E",   // hijau terang
+    PCG: "#6366F1",      // indigo
+  };
+
   const sensorGroups = {
     Sensor: [
       "ECG", "PPG", "PCG", "EMG1", "EMG2", "MYOMETER",
@@ -224,7 +237,7 @@ const MultiBiosignalView: React.FC = () => {
                     <SensorChart
                       data={sensor.chartData}
                       timeRange={timeRange}
-                      color="#EF4444"
+                      color={sensorColors[sensorName] || "#10B981"}
                       simplified={compactView}
                       notch60Hz={!!notchEnabledSensors[sensorName]}
                       compactView={compactView}
