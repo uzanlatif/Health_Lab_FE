@@ -17,7 +17,8 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
-  const [loadingItem, setLoadingItem] = useState<string | null>(null); // ✅
+  const [loadingItem, setLoadingItem] = useState<string | null>(null);
+  const [disableNav, setDisableNav] = useState(false); // ✅ disable all nav temporarily
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_CONTROL;
@@ -37,23 +38,24 @@ const Sidebar: React.FC = () => {
   ];
 
   const runAndNavigate = async (item: (typeof navItems)[0]) => {
-    if (!API_URL || loadingItem) return; // ✅ Prevent rapid clicks
+    if (!API_URL || disableNav) return; // ✅ prevent spam clicks
+
+    setLoadingItem(item.script);
+    setDisableNav(true);
+    navigate(item.path); // ✅ Navigate immediately
 
     try {
-      setLoadingItem(item.script); // ✅ Set loading state
       await axios.post(`${API_URL}/run`, { script_name: item.script });
       setSelectedServer(item.script);
-
-      // Simulate 5-second wait before navigation
-      setTimeout(() => {
-        setLoadingItem(null); // ✅ Clear loading state
-        navigate(item.path);
-      }, 5000);
     } catch (err) {
-      setLoadingItem(null);
       alert("❌ Failed to start server");
-      console.error("API call failed:", err);
+      console.error(err);
     }
+
+    setTimeout(() => {
+      setDisableNav(false); // ✅ Enable navigation again
+      setLoadingItem(null);
+    }, 5000); // 5 seconds
   };
 
   return (
@@ -62,7 +64,7 @@ const Sidebar: React.FC = () => {
         isCollapsed ? "w-20" : "w-64"
       } bg-gray-900 text-gray-100 shadow-md z-10 flex flex-col h-screen border-r border-gray-800 transition-all duration-300`}
     >
-      {/* Header */}
+      {/* Header / Logo */}
       <div className="p-4 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center">
           <img
@@ -95,7 +97,7 @@ const Sidebar: React.FC = () => {
                 isActive
                   ? "bg-blue-600 text-white"
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              } ${isLoading ? "opacity-60 pointer-events-none" : ""}`}
+              } ${disableNav ? "opacity-60 pointer-events-none" : ""}`}
             >
               <div className="flex items-center">
                 <item.icon
