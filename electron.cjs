@@ -1,6 +1,5 @@
 const { app, BrowserWindow, globalShortcut } = require('electron');
 const path = require('path');
-const fs = require('fs');
 
 console.log("🟢 Electron starting...");
 console.log("🛠 Preload path:", path.join(__dirname, 'preload.js'));
@@ -14,6 +13,7 @@ function createWindow() {
     fullscreen: true,
     webPreferences: {
       contextIsolation: true,
+      sandbox: false, // ✅ penting agar preload bisa pakai child_process
       preload: path.join(__dirname, 'preload.js'),
     },
   });
@@ -28,6 +28,10 @@ function createWindow() {
 
   globalShortcut.register('CommandOrControl+Q', () => {
     app.quit();
+  });
+
+  globalShortcut.register('CommandOrControl+Shift+I', () => {
+    win.webContents.openDevTools({ mode: 'detach' });
   });
 }
 
