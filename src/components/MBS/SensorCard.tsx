@@ -43,6 +43,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
         text-sm w-full max-w-[260px] bg-gray-900 text-gray-100
         ${borderColor[status]}
         ${isSelected ? 'ring-2 ring-blue-400 bg-gray-800' : ''}
+        min-h-[72px]  <!-- ✅ Tambahkan tinggi minimum agar ukuran tetap -->
       `}
       onClick={onClick}
     >

@@ -38,9 +38,7 @@ ipcMain.handle('get-battery-status', async () => {
 let win;
 function createWindow() {
   win = new BrowserWindow({
-    fullscreen: false,
-    width: 1280,
-    height: 800,
+    fullscreen: true, // ✅ Enable fullscreen
     webPreferences: {
       contextIsolation: true,
       sandbox: false,
@@ -49,12 +47,15 @@ function createWindow() {
   });
 
   win.loadFile(path.join(__dirname, 'dist/index.html'));
-  win.webContents.openDevTools();
+
+  // win.webContents.openDevTools(); // ❌ Disabled DevTools
 
   globalShortcut.register('CommandOrControl+Q', () => app.quit());
-  globalShortcut.register('CommandOrControl+Shift+I', () =>
-    win.webContents.openDevTools({ mode: 'detach' })
-  );
+
+  // ❌ Optionally remove DevTools shortcut too
+  // globalShortcut.register('CommandOrControl+Shift+I', () =>
+  //   win.webContents.openDevTools({ mode: 'detach' })
+  // );
 }
 
 app.whenReady().then(createWindow);
