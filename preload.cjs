@@ -3,20 +3,21 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Log to file
-const logPath = path.join(__dirname, 'battery_error.log');
+// Log file path (gunakan /tmp untuk memastikan bisa ditulis di Raspberry Pi)
+const logPath = path.join('/tmp', 'battery_error.log');
+
 function log(message) {
   const timestamp = new Date().toISOString();
   fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
 }
 
-console.log("🧠 preload.js loaded");
-log("🔌 preload.js loaded");
+console.log("🧠 preload.cjs loaded");
+log("🔌 preload.cjs started");
 
 contextBridge.exposeInMainWorld('batteryAPI', {
   getBatteryStatus: () =>
     new Promise((resolve, reject) => {
-      log("📦 Running acpi -b");
+      log("📦 Executing 'acpi -b'");
       exec('acpi -b', (err, stdout) => {
         if (err) {
           log(`❌ ACPI error: ${err.message}`);
@@ -24,7 +25,7 @@ contextBridge.exposeInMainWorld('batteryAPI', {
         }
 
         if (!stdout) {
-          log("❌ Empty stdout from acpi");
+          log("❌ Empty output from 'acpi'");
           return reject(new Error("Empty acpi output"));
         }
 
@@ -34,7 +35,7 @@ contextBridge.exposeInMainWorld('batteryAPI', {
 
         if (level === null) {
           log(`⚠️ Could not parse battery level: ${stdout}`);
-          return reject(new Error("Parse error"));
+          return reject(new Error("Battery level parse error"));
         }
 
         log(`✅ Battery level: ${level}%, charging: ${charging}`);
