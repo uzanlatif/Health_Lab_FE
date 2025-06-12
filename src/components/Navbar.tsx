@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, Network, BatteryCharging, BatteryFull, BatteryLow, BatteryWarning } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { BatteryCharging, BatteryFull, BatteryLow, BatteryWarning, Network, User } from 'lucide-react';
 import MetaLogo from '../assets/meta_logo-2-removebg-preview.png';
 import { Capacitor } from '@capacitor/core';
 import { useWebSocketConfig } from '../context/WebSocketConfigContext';
@@ -21,13 +21,10 @@ const Navbar: React.FC = () => {
 
   useEffect(() => {
     const fetchBattery = async () => {
-      if (!window.batteryAPI?.getBatteryStatus) {
-        console.warn("⚠️ batteryAPI not available (running in browser?)");
-        return;
-      }
-
+      if (!window.batteryAPI?.getBatteryStatus) return;
       try {
-        const { voltage, capacity, status } = await window.batteryAPI.getBatteryStatus();
+        const { voltage, capacity, status, error } = await window.batteryAPI.getBatteryStatus();
+        if (error) return console.error("Battery error:", error);
         setBatteryLevel(capacity);
         setBatteryVoltage(voltage);
         setBatteryStatus(status);
@@ -47,20 +44,13 @@ const Navbar: React.FC = () => {
   };
 
   const getBatteryIcon = () => {
-    if (!batteryStatus) return <BatteryWarning className="h-5 w-5 text-yellow-500" />;
-    switch (batteryStatus.toLowerCase()) {
-      case "full":
-        return <BatteryFull className="h-5 w-5 text-green-500" />;
-      case "high":
-        return <BatteryCharging className="h-5 w-5 text-blue-500" />;
-      case "medium":
-        return <BatteryCharging className="h-5 w-5 text-yellow-400" />;
-      case "low":
-        return <BatteryLow className="h-5 w-5 text-orange-400" />;
-      case "critical":
-        return <BatteryWarning className="h-5 w-5 text-red-500" />;
-      default:
-        return <BatteryWarning className="h-5 w-5 text-gray-500" />;
+    switch ((batteryStatus || "").toLowerCase()) {
+      case "full": return <BatteryFull className="h-5 w-5 text-green-500" />;
+      case "high": return <BatteryCharging className="h-5 w-5 text-blue-500" />;
+      case "medium": return <BatteryCharging className="h-5 w-5 text-yellow-400" />;
+      case "low": return <BatteryLow className="h-5 w-5 text-orange-400" />;
+      case "critical": return <BatteryWarning className="h-5 w-5 text-red-500" />;
+      default: return <BatteryWarning className="h-5 w-5 text-gray-500" />;
     }
   };
 
@@ -73,7 +63,6 @@ const Navbar: React.FC = () => {
       }}
     >
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Logo kiri */}
         <div className="flex items-center">
           <img
             src={MetaLogo}
@@ -83,9 +72,7 @@ const Navbar: React.FC = () => {
           />
         </div>
 
-        {/* Kontrol kanan */}
         <div className="flex items-center space-x-4">
-          {/* IP Input / View */}
           {editing ? (
             <>
               <input
@@ -119,7 +106,6 @@ const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* User Icon */}
           <button className="p-2 rounded-full hover:bg-gray-800 transition-colors">
             <User className="h-5 w-5 text-gray-300" />
           </button>

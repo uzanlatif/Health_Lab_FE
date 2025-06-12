@@ -6,6 +6,7 @@ interface Window {
       voltage: number;
       capacity: number;
       status: string;
+      error?: string;
     }>;
   };
 }
