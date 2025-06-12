@@ -18,20 +18,24 @@ const Navbar: React.FC = () => {
     setTempIp(ip);
   }, [ip]);
 
-  // Fetch battery from Electron preload
   useEffect(() => {
     const fetchBattery = async () => {
+      if (!window.batteryAPI?.getBatteryStatus) {
+        console.warn("⚠️ batteryAPI not available (probably running in browser)");
+        return;
+      }
+
       try {
-        const result = await window.batteryAPI.getBatteryStatus();
-        setBatteryLevel(result.level);
-        setCharging(result.charging);
-      } catch (error) {
-        console.error("Battery fetch error:", error);
+        const { level, charging } = await window.batteryAPI.getBatteryStatus();
+        setBatteryLevel(level);
+        setCharging(charging);
+      } catch (err) {
+        console.error("Battery fetch error:", err);
       }
     };
 
     fetchBattery();
-    const interval = setInterval(fetchBattery, 10000); // refresh every 10 sec
+    const interval = setInterval(fetchBattery, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -49,7 +53,7 @@ const Navbar: React.FC = () => {
       }}
     >
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: Logo */}
+        {/* Logo kiri */}
         <div className="flex items-center">
           <img
             src={MetaLogo}
@@ -59,7 +63,7 @@ const Navbar: React.FC = () => {
           />
         </div>
 
-        {/* Right: IP + Battery + Profile */}
+        {/* Kontrol kanan */}
         <div className="flex items-center space-x-4">
           {editing ? (
             <>
@@ -85,7 +89,7 @@ const Navbar: React.FC = () => {
             </button>
           )}
 
-          {/* Battery Indicator */}
+          {/* Indikator baterai */}
           {batteryLevel !== null && (
             <div className="flex items-center text-sm text-gray-300">
               <div className="relative w-6 h-3 border border-gray-400 rounded-sm mr-1 bg-gray-700">
@@ -100,7 +104,7 @@ const Navbar: React.FC = () => {
             </div>
           )}
 
-          {/* User Icon */}
+          {/* Icon user */}
           <button className="p-2 rounded-full hover:bg-gray-800 transition-colors">
             <User className="h-5 w-5 text-gray-300" />
           </button>
