@@ -18,7 +18,7 @@ const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
-  const [disableNav, setDisableNav] = useState(false); // ✅ disable all nav temporarily
+  const [disableNav, setDisableNav] = useState(false); // ⛔ Blokir klik
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_CONTROL;
@@ -38,11 +38,11 @@ const Sidebar: React.FC = () => {
   ];
 
   const runAndNavigate = async (item: (typeof navItems)[0]) => {
-    if (!API_URL || disableNav) return; // ✅ prevent spam clicks
+    if (!API_URL || disableNav) return; // Blokir klik saat loading
 
     setLoadingItem(item.script);
     setDisableNav(true);
-    navigate(item.path); // ✅ Navigate immediately
+    navigate(item.path); // ⏩ Navigasi instan
 
     try {
       await axios.post(`${API_URL}/run`, { script_name: item.script });
@@ -52,10 +52,11 @@ const Sidebar: React.FC = () => {
       console.error(err);
     }
 
+    // ⏱️ Tunggu 5 detik sebelum izinkan navigasi lagi
     setTimeout(() => {
-      setDisableNav(false); // ✅ Enable navigation again
+      setDisableNav(false);
       setLoadingItem(null);
-    }, 5000); // 5 seconds
+    }, 5000);
   };
 
   return (
@@ -64,7 +65,7 @@ const Sidebar: React.FC = () => {
         isCollapsed ? "w-20" : "w-64"
       } bg-gray-900 text-gray-100 shadow-md z-10 flex flex-col h-screen border-r border-gray-800 transition-all duration-300`}
     >
-      {/* Header / Logo */}
+      {/* Header */}
       <div className="p-4 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center">
           <img
