@@ -10,10 +10,10 @@ import { useWebSocketConfig } from "../context/WebSocketConfigContext";
 const MultiBiosignalView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
+  const [recordStartTime, setRecordStartTime] = useState<Date | null>(null);
+  const [elapsedTime, setElapsedTime] = useState<string>("00:00:00");
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
-  const [notchEnabledSensors, setNotchEnabledSensors] = useState<
-    Record<string, boolean>
-  >({});
+  const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
   const [compactView, setCompactView] = useState(true);
 
   const { ip } = useWebSocketConfig();
@@ -65,11 +65,29 @@ const MultiBiosignalView: React.FC = () => {
     }
   }, [sensorData, selectedSensors, timeRange, isRecording]);
 
+  useEffect(() => {
+    if (!isRecording || !recordStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = Math.floor((now.getTime() - recordStartTime.getTime()) / 1000);
+
+      const hours = String(Math.floor(diff / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
+      const seconds = String(diff % 60).padStart(2, "0");
+
+      setElapsedTime(`${hours}:${minutes}:${seconds}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRecording, recordStartTime]);
+
   const toggleRecording = () => {
     setIsRecording((prev) => {
       const next = !prev;
       if (next) {
         recordedLogsRef.current = {};
+        setRecordStartTime(new Date());
       } else {
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
@@ -80,6 +98,8 @@ const MultiBiosignalView: React.FC = () => {
         }
         localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
         console.log("✅ Recorded logs saved to localStorage.");
+        setRecordStartTime(null);
+        setElapsedTime("00:00:00");
       }
       return next;
     });
@@ -124,35 +144,30 @@ const MultiBiosignalView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter(
-        (s) => s.status === "critical"
-      ).length,
-      warning: Object.values(processedData).filter(
-        (s) => s.status === "warning"
-      ).length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal")
-        .length,
+      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
+      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
     }),
     [processedData]
   );
 
   const sensorColors: Record<string, string> = {
-    ECG: "#10B981", // Emerald green
-    PPG: "#3B82F6", // Blue
-    PCG: "#EF4444", // Red
-    EMG1: "#8B5CF6", // Violet
-    EMG2: "#A855F7", // Light violet
-    MYOMETER: "#6B7280", // Cool gray
-    SPIRO: "#06B6D4", // Cyan
-    TEMPERATURE: "#F97316", // Orange
-    NIBP: "#FACC15", // Yellow
-    OXYGEN: "#60A5FA", // Light blue
-    "EEG CH11": "#C084FC", // Soft violet
-    "EEG CH12": "#D946EF", // Pink-violet
-    "EEG CH13": "#A78BFA", // Soft purple
-    "EEG CH14": "#F472B6", // Rose
-    "EEG CH15": "#FB7185", // Red-pink
-    "EEG CH16": "#F87171", // Coral red
+    ECG: "#10B981",
+    PPG: "#3B82F6",
+    PCG: "#EF4444",
+    EMG1: "#8B5CF6",
+    EMG2: "#A855F7",
+    MYOMETER: "#6B7280",
+    SPIRO: "#06B6D4",
+    TEMPERATURE: "#F97316",
+    NIBP: "#FACC15",
+    OXYGEN: "#60A5FA",
+    "EEG CH11": "#C084FC",
+    "EEG CH12": "#D946EF",
+    "EEG CH13": "#A78BFA",
+    "EEG CH14": "#F472B6",
+    "EEG CH15": "#FB7185",
+    "EEG CH16": "#F87171",
   };
 
   const sensorGroups = {
@@ -186,6 +201,7 @@ const MultiBiosignalView: React.FC = () => {
         reconnect={reconnect}
         toggleRecording={toggleRecording}
         onDownload={() => {}}
+        elapsedTime={elapsedTime}
       />
 
       <div className="flex justify-end">
@@ -216,7 +232,6 @@ const MultiBiosignalView: React.FC = () => {
                     <SensorCard
                       key={sensorName}
                       name={sensorName}
-                      value={sensor?.value || 0}
                       unit={sensor?.unit || ""}
                       status={sensor?.status || "normal"}
                       change={sensor?.change || 0}
@@ -277,9 +292,7 @@ const MultiBiosignalView: React.FC = () => {
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">
-                  Click on a sensor to view detailed logs
-                </p>
+                <p className="text-sm">Click on a sensor to view detailed logs</p>
               </div>
             </div>
           )}
