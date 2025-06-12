@@ -1,4 +1,4 @@
-import React, { useState,useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   BarChart2,
@@ -6,18 +6,20 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import axios from "axios";
 import LogoImage from "../assets/wa.jpg";
-import { useWebSocketConfig } from "../context/WebSocketConfigContext"; // ✅ Import context
+import { useWebSocketConfig } from "../context/WebSocketConfigContext";
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
+  const [loadingItem, setLoadingItem] = useState<string | null>(null); // ✅
 
-  const { ip } = useWebSocketConfig(); // ✅ Use context
+  const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_CONTROL;
 
   const API_URL = useMemo(() => {
@@ -35,16 +37,20 @@ const Sidebar: React.FC = () => {
   ];
 
   const runAndNavigate = async (item: (typeof navItems)[0]) => {
-    if (!API_URL) {
-      alert("❌ Invalid API configuration.");
-      return;
-    }
+    if (!API_URL || loadingItem) return; // ✅ Prevent rapid clicks
 
     try {
+      setLoadingItem(item.script); // ✅ Set loading state
       await axios.post(`${API_URL}/run`, { script_name: item.script });
       setSelectedServer(item.script);
-      navigate(item.path);
+
+      // Simulate 5-second wait before navigation
+      setTimeout(() => {
+        setLoadingItem(null); // ✅ Clear loading state
+        navigate(item.path);
+      }, 5000);
     } catch (err) {
+      setLoadingItem(null);
       alert("❌ Failed to start server");
       console.error("API call failed:", err);
     }
@@ -56,7 +62,7 @@ const Sidebar: React.FC = () => {
         isCollapsed ? "w-20" : "w-64"
       } bg-gray-900 text-gray-100 shadow-md z-10 flex flex-col h-screen border-r border-gray-800 transition-all duration-300`}
     >
-      {/* Header / Logo */}
+      {/* Header */}
       <div className="p-4 border-b border-gray-800 flex items-center justify-between">
         <div className="flex items-center">
           <img
@@ -79,22 +85,29 @@ const Sidebar: React.FC = () => {
       <nav className="flex-1 pt-4 space-y-1">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path;
+          const isLoading = loadingItem === item.script;
+
           return (
             <div
               key={index}
               onClick={() => runAndNavigate(item)}
-              className={`flex items-center px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${
+              className={`flex items-center justify-between px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${
                 isActive
                   ? "bg-blue-600 text-white"
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
-              }`}
+              } ${isLoading ? "opacity-60 pointer-events-none" : ""}`}
             >
-              <item.icon
-                className={`mr-3 h-5 w-5 ${
-                  isActive ? "text-white" : "text-gray-400"
-                }`}
-              />
-              {!isCollapsed && <span>{item.label}</span>}
+              <div className="flex items-center">
+                <item.icon
+                  className={`mr-3 h-5 w-5 ${
+                    isActive ? "text-white" : "text-gray-400"
+                  }`}
+                />
+                {!isCollapsed && <span>{item.label}</span>}
+              </div>
+              {!isCollapsed && isLoading && (
+                <Loader2 className="animate-spin w-4 h-4 text-white" />
+              )}
             </div>
           );
         })}
