@@ -2,6 +2,10 @@
 
 interface Window {
   batteryAPI?: {
-    getBatteryStatus: () => Promise<{ level: number; charging: boolean }>;
+    getBatteryStatus: () => Promise<{
+      voltage: number;
+      capacity: number;
+      status: string;
+    }>;
   };
 }

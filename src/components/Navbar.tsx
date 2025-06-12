@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Network } from 'lucide-react';
+import { User, Network, BatteryCharging, BatteryFull, BatteryLow, BatteryWarning } from 'lucide-react';
 import MetaLogo from '../assets/meta_logo-2-removebg-preview.png';
 import { Capacitor } from '@capacitor/core';
 import { useWebSocketConfig } from '../context/WebSocketConfigContext';
@@ -10,7 +10,8 @@ const Navbar: React.FC = () => {
   const [tempIp, setTempIp] = useState(ip);
 
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
-  const [charging, setCharging] = useState<boolean>(false);
+  const [batteryVoltage, setBatteryVoltage] = useState<number | null>(null);
+  const [batteryStatus, setBatteryStatus] = useState<string | null>(null);
 
   const isNative = Capacitor.isNativePlatform();
 
@@ -21,14 +22,15 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const fetchBattery = async () => {
       if (!window.batteryAPI?.getBatteryStatus) {
-        console.warn("⚠️ batteryAPI not available (probably running in browser)");
+        console.warn("⚠️ batteryAPI not available (running in browser?)");
         return;
       }
 
       try {
-        const { level, charging } = await window.batteryAPI.getBatteryStatus();
-        setBatteryLevel(level);
-        setCharging(charging);
+        const { voltage, capacity, status } = await window.batteryAPI.getBatteryStatus();
+        setBatteryLevel(capacity);
+        setBatteryVoltage(voltage);
+        setBatteryStatus(status);
       } catch (err) {
         console.error("Battery fetch error:", err);
       }
@@ -42,6 +44,24 @@ const Navbar: React.FC = () => {
   const handleSave = () => {
     setIp(tempIp);
     setEditing(false);
+  };
+
+  const getBatteryIcon = () => {
+    if (!batteryStatus) return <BatteryWarning className="h-5 w-5 text-yellow-500" />;
+    switch (batteryStatus.toLowerCase()) {
+      case "full":
+        return <BatteryFull className="h-5 w-5 text-green-500" />;
+      case "high":
+        return <BatteryCharging className="h-5 w-5 text-blue-500" />;
+      case "medium":
+        return <BatteryCharging className="h-5 w-5 text-yellow-400" />;
+      case "low":
+        return <BatteryLow className="h-5 w-5 text-orange-400" />;
+      case "critical":
+        return <BatteryWarning className="h-5 w-5 text-red-500" />;
+      default:
+        return <BatteryWarning className="h-5 w-5 text-gray-500" />;
+    }
   };
 
   return (
@@ -65,6 +85,7 @@ const Navbar: React.FC = () => {
 
         {/* Kontrol kanan */}
         <div className="flex items-center space-x-4">
+          {/* IP Input / View */}
           {editing ? (
             <>
               <input
@@ -89,22 +110,16 @@ const Navbar: React.FC = () => {
             </button>
           )}
 
-          {/* Indikator baterai */}
-          {batteryLevel !== null && (
-            <div className="flex items-center text-sm text-gray-300">
-              <div className="relative w-6 h-3 border border-gray-400 rounded-sm mr-1 bg-gray-700">
-                <div
-                  className="h-full bg-green-400"
-                  style={{ width: `${batteryLevel}%` }}
-                />
-                <div className="absolute top-0 right-[-4px] w-1 h-3 bg-gray-400 rounded-r-sm" />
-              </div>
-              <span>{batteryLevel}%</span>
-              {charging && <span className="ml-1 text-green-400">⚡</span>}
+          {/* Battery Info */}
+          {batteryLevel !== null && batteryVoltage !== null && (
+            <div className="flex items-center text-sm text-gray-300 space-x-1">
+              {getBatteryIcon()}
+              <span>{batteryLevel.toFixed(0)}%</span>
+              <span className="text-xs text-gray-400">({batteryVoltage.toFixed(2)}V)</span>
             </div>
           )}
 
-          {/* Icon user */}
+          {/* User Icon */}
           <button className="p-2 rounded-full hover:bg-gray-800 transition-colors">
             <User className="h-5 w-5 text-gray-300" />
           </button>
