@@ -3,7 +3,7 @@ import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface SensorCardProps {
   name: string;
-  unit: string;
+  // unit: string;
   status: 'normal' | 'warning' | 'critical';
   change: number;
   onClick?: () => void;
@@ -12,7 +12,7 @@ interface SensorCardProps {
 
 const SensorCard: React.FC<SensorCardProps> = ({
   name,
-  unit,
+  // unit,
   status,
   change,
   onClick,
@@ -57,7 +57,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         </div>
-        <p className="text-xs font-normal text-gray-400">{unit}</p>
+        {/* <p className="text-xs font-normal text-gray-400">{unit}</p> */}
       </div>
 
       {/* Kanan: Perubahan */}
