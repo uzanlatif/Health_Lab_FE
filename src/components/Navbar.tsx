@@ -5,20 +5,40 @@ import { Capacitor } from '@capacitor/core';
 import { useWebSocketConfig } from '../context/WebSocketConfigContext';
 
 const Navbar: React.FC = () => {
-  const { ip, setIp } = useWebSocketConfig(); // ✅ gunakan context
+  const { ip, setIp } = useWebSocketConfig();
   const [editing, setEditing] = useState(false);
   const [tempIp, setTempIp] = useState(ip);
 
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [charging, setCharging] = useState<boolean>(false);
+
   const isNative = Capacitor.isNativePlatform();
 
+  useEffect(() => {
+    setTempIp(ip);
+  }, [ip]);
+
+  // Fetch battery from Electron preload
+  useEffect(() => {
+    const fetchBattery = async () => {
+      try {
+        const result = await window.batteryAPI.getBatteryStatus();
+        setBatteryLevel(result.level);
+        setCharging(result.charging);
+      } catch (error) {
+        console.error("Battery fetch error:", error);
+      }
+    };
+
+    fetchBattery();
+    const interval = setInterval(fetchBattery, 10000); // refresh every 10 sec
+    return () => clearInterval(interval);
+  }, []);
+
   const handleSave = () => {
-    setIp(tempIp); // ✅ simpan ke context, otomatis trigger reconnect
+    setIp(tempIp);
     setEditing(false);
   };
-
-  useEffect(() => {
-    setTempIp(ip); // ✅ sync dengan context jika IP berubah
-  }, [ip]);
 
   return (
     <header
@@ -29,7 +49,7 @@ const Navbar: React.FC = () => {
       }}
     >
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Kiri: Logo */}
+        {/* Left: Logo */}
         <div className="flex items-center">
           <img
             src={MetaLogo}
@@ -39,7 +59,7 @@ const Navbar: React.FC = () => {
           />
         </div>
 
-        {/* Kanan: IP + Icon */}
+        {/* Right: IP + Battery + Profile */}
         <div className="flex items-center space-x-4">
           {editing ? (
             <>
@@ -65,6 +85,22 @@ const Navbar: React.FC = () => {
             </button>
           )}
 
+          {/* Battery Indicator */}
+          {batteryLevel !== null && (
+            <div className="flex items-center text-sm text-gray-300">
+              <div className="relative w-6 h-3 border border-gray-400 rounded-sm mr-1 bg-gray-700">
+                <div
+                  className="h-full bg-green-400"
+                  style={{ width: `${batteryLevel}%` }}
+                />
+                <div className="absolute top-0 right-[-4px] w-1 h-3 bg-gray-400 rounded-r-sm" />
+              </div>
+              <span>{batteryLevel}%</span>
+              {charging && <span className="ml-1 text-green-400">⚡</span>}
+            </div>
+          )}
+
+          {/* User Icon */}
           <button className="p-2 rounded-full hover:bg-gray-800 transition-colors">
             <User className="h-5 w-5 text-gray-300" />
           </button>

@@ -1,4 +1,3 @@
-// electron.js
 const { app, BrowserWindow, globalShortcut } = require('electron');
 const path = require('path');
 
@@ -8,9 +7,10 @@ let win;
 
 function createWindow() {
   win = new BrowserWindow({
-    fullscreen: true, // Set jendela fullscreen
+    fullscreen: true,
     webPreferences: {
       contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'), // ✅ tambahkan preload di sini
     },
   });
 
@@ -20,7 +20,6 @@ function createWindow() {
     win.show();
   });
 
-  // Daftar shortcut Ctrl+Q untuk keluar aplikasi
   globalShortcut.register('CommandOrControl+Q', () => {
     app.quit();
   });
@@ -28,7 +27,6 @@ function createWindow() {
 
 app.whenReady().then(createWindow);
 
-// Unregister semua shortcut saat app keluar
 app.on('will-quit', () => {
   globalShortcut.unregisterAll();
 });
