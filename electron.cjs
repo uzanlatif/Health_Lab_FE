@@ -1,5 +1,9 @@
 const { app, BrowserWindow, globalShortcut } = require('electron');
 const path = require('path');
+const fs = require('fs');
+
+console.log("🟢 Electron starting...");
+console.log("🛠 Preload path:", path.join(__dirname, 'preload.js'));
 
 app.disableHardwareAcceleration();
 
@@ -10,9 +14,11 @@ function createWindow() {
     fullscreen: true,
     webPreferences: {
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'), // ✅ tambahkan preload di sini
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
+
+  console.log("🪟 BrowserWindow created");
 
   win.loadFile(path.join(__dirname, 'dist/index.html'));
 

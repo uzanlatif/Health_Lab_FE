@@ -3,32 +3,29 @@ const { exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-function logError(message) {
-  const logPath = path.join(__dirname, 'battery_error.log');
+// Log to file
+const logPath = path.join(__dirname, 'battery_error.log');
+function log(message) {
   const timestamp = new Date().toISOString();
   fs.appendFileSync(logPath, `[${timestamp}] ${message}\n`);
 }
 
-console.log("✅ preload.js loaded");
+console.log("🧠 preload.js loaded");
+log("🔌 preload.js loaded");
 
 contextBridge.exposeInMainWorld('batteryAPI', {
   getBatteryStatus: () =>
     new Promise((resolve, reject) => {
-      console.log("🔋 Fetching battery info...");
-
+      log("📦 Running acpi -b");
       exec('acpi -b', (err, stdout) => {
         if (err) {
-          const errMsg = `❌ ACPI error: ${err.message}`;
-          console.error(errMsg);
-          logError(errMsg);
+          log(`❌ ACPI error: ${err.message}`);
           return reject(err);
         }
 
         if (!stdout) {
-          const emptyMsg = "❌ Empty stdout from acpi command.";
-          console.warn(emptyMsg);
-          logError(emptyMsg);
-          return reject(new Error(emptyMsg));
+          log("❌ Empty stdout from acpi");
+          return reject(new Error("Empty acpi output"));
         }
 
         const match = stdout.match(/(\d+)%/);
@@ -36,13 +33,12 @@ contextBridge.exposeInMainWorld('batteryAPI', {
         const level = match ? parseInt(match[1], 10) : null;
 
         if (level === null) {
-          const parseErr = `⚠️ Failed to parse battery level: ${stdout}`;
-          console.warn(parseErr);
-          logError(parseErr);
-          return reject(new Error(parseErr));
+          log(`⚠️ Could not parse battery level: ${stdout}`);
+          return reject(new Error("Parse error"));
         }
 
-        return resolve({ level, charging });
+        log(`✅ Battery level: ${level}%, charging: ${charging}`);
+        resolve({ level, charging });
       });
     }),
 });
