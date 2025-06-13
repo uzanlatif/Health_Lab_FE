@@ -10,6 +10,8 @@ import { useWebSocketConfig } from "../context/WebSocketConfigContext";
 const ECGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
+  const [recordStartTime, setRecordStartTime] = useState<Date | null>(null);
+  const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
   const [compactView, setCompactView] = useState(true);
@@ -29,6 +31,23 @@ const ECGView: React.FC = () => {
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
+  // Update elapsed time
+  useEffect(() => {
+    if (!isRecording || !recordStartTime) return;
+
+    const interval = setInterval(() => {
+      const now = new Date();
+      const diff = Math.floor((now.getTime() - recordStartTime.getTime()) / 1000);
+      const hours = String(Math.floor(diff / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
+      const seconds = String(diff % 60).padStart(2, "0");
+      setElapsedTime(`${hours}:${minutes}:${seconds}`);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isRecording, recordStartTime]);
+
+  // Buffer and record sensor data
   useEffect(() => {
     if (!sensorData) return;
 
@@ -66,6 +85,7 @@ const ECGView: React.FC = () => {
       const next = !prev;
       if (next) {
         recordedLogsRef.current = {};
+        setRecordStartTime(new Date());
       } else {
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
@@ -76,6 +96,8 @@ const ECGView: React.FC = () => {
         }
         localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
         console.log("✅ Recorded logs saved to localStorage.");
+        setRecordStartTime(null);
+        setElapsedTime("00:00:00");
       }
       return next;
     });
@@ -141,7 +163,7 @@ const ECGView: React.FC = () => {
         isRecording={isRecording}
         statusCounts={statusCounts}
         formattedTime={formattedTime}
-        elapsedTime="--:--" // Atur jika Anda ingin menampilkan jam rekaman aktif
+        elapsedTime={elapsedTime}
         reconnect={reconnect}
         toggleRecording={toggleRecording}
         onDownload={() => {}}
