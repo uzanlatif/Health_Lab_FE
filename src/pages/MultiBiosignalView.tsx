@@ -232,7 +232,6 @@ const MultiBiosignalView: React.FC = () => {
                     <SensorCard
                       key={sensorName}
                       name={sensorName}
-                      // unit={sensor?.unit || ""}
                       status={sensor?.status || "normal"}
                       change={sensor?.change || 0}
                       onClick={() => toggleSensorSelection(sensorName)}

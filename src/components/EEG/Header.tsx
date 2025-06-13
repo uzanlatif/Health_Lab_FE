@@ -6,6 +6,7 @@ interface HeaderProps {
   isRecording: boolean;
   statusCounts: { all: number };
   formattedTime: string;
+  elapsedTime: string;
   reconnect: () => void;
   toggleRecording: () => void;
   onDownload: () => void;
@@ -16,6 +17,7 @@ const Header: React.FC<HeaderProps> = ({
   isRecording,
   statusCounts,
   formattedTime,
+  elapsedTime,
   reconnect,
   toggleRecording,
   onDownload,
@@ -56,35 +58,35 @@ const Header: React.FC<HeaderProps> = ({
       alert("❌ Failed to download CSV file.");
     }
 
-    onDownload(); // Optional callback after download
+    onDownload();
   };
 
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-white">EEG Monitor</h1>
+        <h1 className="text-2xl font-bold text-white">MultiBioSignal Monitor</h1>
         <p className="text-gray-300">
-          Monitoring {statusCounts.all} health sensors | Last updated:{" "}
-          {formattedTime}
+          Monitoring {statusCounts.all} health sensors | Last updated: {formattedTime}
           <span
             className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              isConnected
-                ? "bg-green-900 text-green-200"
-                : "bg-red-900 text-red-200"
+              isConnected ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"
             }`}
           >
             {isConnected ? "Connected" : "Disconnected"}
           </span>
         </p>
+        {isRecording && (
+          <p className="text-yellow-300 text-sm mt-1">
+            ⏱️ Recording time: {elapsedTime}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center mt-4 md:mt-0 space-x-2">
         <button
           onClick={toggleRecording}
           className={`px-4 py-2 ${
-            isRecording
-              ? "bg-yellow-500 hover:bg-yellow-600"
-              : "bg-blue-500 hover:bg-blue-600"
+            isRecording ? "bg-yellow-500 hover:bg-yellow-600" : "bg-blue-500 hover:bg-blue-600"
           } text-white rounded-lg flex items-center`}
         >
           {isRecording ? (

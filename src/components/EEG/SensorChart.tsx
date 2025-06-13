@@ -32,6 +32,53 @@ interface SensorChartProps {
   timeRange: "1h" | "6h" | "24h";
   color: string;
   simplified?: boolean;
+  notch60Hz?: boolean;
+  compactView?: boolean;
+}
+
+function applyNotch60HzFilter(data: { x: Date; y: number }[], sampleRate: number): { x: Date; y: number }[] {
+  const notchFreq = 60;
+  const Q = 30;
+  const w0 = 2 * Math.PI * notchFreq / sampleRate;
+  const alpha = Math.sin(w0) / (2 * Q);
+
+  const b0 = 1;
+  const b1 = -2 * Math.cos(w0);
+  const b2 = 1;
+  const a0 = 1 + alpha;
+  const a1 = -2 * Math.cos(w0);
+  const a2 = 1 - alpha;
+
+  const b = [b0 / a0, b1 / a0, b2 / a0];
+  const a = [1, a1 / a0, a2 / a0];
+
+  const forward = biquadFilter(data.map(d => d.y), b, a);
+  const backward = biquadFilter(forward.slice().reverse(), b, a).reverse();
+
+  return data.map((d, i) => ({
+    x: d.x,
+    y: backward[i],
+  }));
+}
+
+function biquadFilter(input: number[], b: number[], a: number[]): number[] {
+  const output: number[] = [];
+  let x1 = 0, x2 = 0;
+  let y1 = 0, y2 = 0;
+
+  for (let i = 0; i < input.length; i++) {
+    const x0 = input[i];
+    const y0 = b[0] * x0 + b[1] * x1 + b[2] * x2 - a[1] * y1 - a[2] * y2;
+
+    output.push(y0);
+
+    x2 = x1;
+    x1 = x0;
+    y2 = y1;
+    y1 = y0;
+  }
+
+  return output;
 }
 
 const SensorChart: React.FC<SensorChartProps> = ({
@@ -39,24 +86,26 @@ const SensorChart: React.FC<SensorChartProps> = ({
   timeRange,
   color,
   simplified = false,
+  notch60Hz = false,
+  compactView = false,
 }) => {
   const cleanedData = useMemo(() => {
     const allData = data
-      .filter(
-        (d) =>
-          d &&
-          d.x instanceof Date &&
-          !isNaN(d.x.getTime()) &&
-          typeof d.y === "number" &&
-          !isNaN(d.y)
-      )
+      .filter(d => d && d.x instanceof Date && !isNaN(d.x.getTime()) && typeof d.y === "number" && !isNaN(d.y))
       .sort((a, b) => a.x.getTime() - b.x.getTime());
 
     const latestTime = allData.length > 0 ? allData[allData.length - 1].x.getTime() : 0;
-    const fiveSecondsAgo = latestTime - 5_000;
+    const fiveSecondsAgo = latestTime - 5000;
+    let windowed = allData.filter(d => d.x.getTime() >= fiveSecondsAgo);
 
-    return allData.filter((d) => d.x.getTime() >= fiveSecondsAgo);
-  }, [data]);
+    if (notch60Hz && windowed.length > 1) {
+      const dt = (windowed[1].x.getTime() - windowed[0].x.getTime()) / 1000;
+      const sampleRate = dt > 0 ? 1 / dt : 250;
+      windowed = applyNotch60HzFilter(windowed, sampleRate);
+    }
+
+    return windowed;
+  }, [data, notch60Hz]);
 
   const chartData: ChartData<"line", { x: Date; y: number }[], unknown> = useMemo(() => ({
     datasets: [
@@ -92,9 +141,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
         time: {
           tooltipFormat: "HH:mm:ss",
           unit: "second",
-          displayFormats: {
-            second: "HH:mm:ss",
-          },
+          displayFormats: { second: "HH:mm:ss" },
         },
         ticks: {
           maxRotation: 0,
@@ -117,7 +164,7 @@ const SensorChart: React.FC<SensorChartProps> = ({
   }
 
   return (
-    <div style={{ height: "150px" }}>
+    <div style={{ height: compactView ? "100px" : "150px" }}>
       <Line data={chartData} options={chartOptions} />
     </div>
   );
