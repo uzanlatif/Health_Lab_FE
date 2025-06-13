@@ -11,13 +11,11 @@ const ECGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
-  const [notchEnabledSensors, setNotchEnabledSensors] = useState<
-    Record<string, boolean>
-  >({});
+  const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
+  const [compactView, setCompactView] = useState(true);
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_ECG;
-
   const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
   const {
@@ -51,9 +49,7 @@ const ECGView: React.FC = () => {
           y: v.y,
         }));
 
-      const merged = [...currentBuffer, ...newBuffer].slice(
-        -MAX_BUFFER_SIZE[timeRange]
-      );
+      const merged = [...currentBuffer, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);
       dataBufferRef.current[sensorName] = merged;
 
       if (isRecording) {
@@ -124,32 +120,17 @@ const ECGView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter(
-        (s) => s.status === "critical"
-      ).length,
-      warning: Object.values(processedData).filter(
-        (s) => s.status === "warning"
-      ).length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal")
-        .length,
+      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
+      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
+      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
     }),
     [processedData]
   );
 
   const sensorGroups = {
     Sensor: [
-      "LEAD_I",
-      "LEAD_II",
-      "LEAD_III",
-      "AVR",
-      "AVL",
-      "AVF",
-      "V1",
-      "V2",
-      "V3",
-      "V4",
-      "V5",
-      "V6",
+      "LEAD_I", "LEAD_II", "LEAD_III", "AVR", "AVL", "AVF",
+      "V1", "V2", "V3", "V4", "V5", "V6",
     ],
   };
 
@@ -160,10 +141,20 @@ const ECGView: React.FC = () => {
         isRecording={isRecording}
         statusCounts={statusCounts}
         formattedTime={formattedTime}
+        elapsedTime="--:--" // Atur jika Anda ingin menampilkan jam rekaman aktif
         reconnect={reconnect}
         toggleRecording={toggleRecording}
         onDownload={() => {}}
       />
+
+      <div className="flex justify-end">
+        <button
+          className="text-sm bg-gray-700 px-3 py-1 rounded hover:bg-gray-600 transition"
+          onClick={() => setCompactView((prev) => !prev)}
+        >
+          {compactView ? "🔎 Expand View" : "📊 Compact View"}
+        </button>
+      </div>
 
       <StatusCards counts={statusCounts} />
 
@@ -184,8 +175,6 @@ const ECGView: React.FC = () => {
                     <SensorCard
                       key={sensorName}
                       name={sensorName}
-                      value={sensor?.value || 0}
-                      unit={sensor?.unit || ""}
                       status={sensor?.status || "normal"}
                       change={sensor?.change || 0}
                       onClick={() => toggleSensorSelection(sensorName)}
@@ -200,46 +189,46 @@ const ECGView: React.FC = () => {
 
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
-            selectedSensors.map((sensorName) => {
-              const sensor = processedData[sensorName];
-              if (!sensor || !Array.isArray(sensor.chartData)) return null;
+            <div className={compactView ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
+              {selectedSensors.map((sensorName) => {
+                const sensor = processedData[sensorName];
+                if (!sensor || !Array.isArray(sensor.chartData)) return null;
 
-              return (
-                <div
-                  key={sensorName}
-                  className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600 mb-4"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold text-gray-100">
-                      {sensor.displayName} Logs
-                    </h2>
-                    <label className="text-sm text-gray-300 flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={!!notchEnabledSensors[sensorName]}
-                        onChange={() => toggleNotchFilter(sensorName)}
-                      />
-                      60Hz Notch Filter
-                    </label>
+                return (
+                  <div
+                    key={sensorName}
+                    className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <h2 className="text-lg font-semibold text-gray-100 truncate">
+                        {sensor.displayName || sensorName} Logs
+                      </h2>
+                      <label className="text-sm text-gray-300 flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!notchEnabledSensors[sensorName]}
+                          onChange={() => toggleNotchFilter(sensorName)}
+                        />
+                        60Hz Notch Filter
+                      </label>
+                    </div>
+                    <SensorChart
+                      data={sensor.chartData}
+                      timeRange={timeRange}
+                      color="#EF4444"
+                      simplified={compactView}
+                      notch60Hz={!!notchEnabledSensors[sensorName]}
+                      compactView={compactView}
+                    />
                   </div>
-
-                  <SensorChart
-                    data={sensor.chartData}
-                    timeRange={timeRange}
-                    color="#EF4444"
-                    simplified={false}
-                    notch60Hz={!!notchEnabledSensors[sensorName]}
-                  />
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           ) : (
             <div className="bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-600 h-full flex items-center justify-center">
               <div className="text-center text-gray-400">
                 <p className="text-lg font-medium mb-2">No Sensor Selected</p>
-                <p className="text-sm">
-                  Click on a sensor to view detailed logs
-                </p>
+                <p className="text-sm">Click on a sensor to view detailed logs</p>
               </div>
             </div>
           )}

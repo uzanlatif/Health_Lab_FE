@@ -3,8 +3,7 @@ import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface SensorCardProps {
   name: string;
-  value: number;
-  unit: string;
+  // unit: string;
   status: 'normal' | 'warning' | 'critical';
   change: number;
   onClick?: () => void;
@@ -13,15 +12,12 @@ interface SensorCardProps {
 
 const SensorCard: React.FC<SensorCardProps> = ({
   name,
-  value,
-  unit,
+  // unit,
   status,
   change,
   onClick,
   isSelected = false,
 }) => {
-  const formattedValue = value.toFixed(2);
-
   const statusColors = {
     normal: 'bg-green-800 text-green-100',
     warning: 'bg-yellow-700 text-yellow-100',
@@ -47,23 +43,21 @@ const SensorCard: React.FC<SensorCardProps> = ({
         text-sm w-full max-w-[260px] bg-gray-900 text-gray-100
         ${borderColor[status]}
         ${isSelected ? 'ring-2 ring-blue-400 bg-gray-800' : ''}
+        min-h-[72px]  <!-- ✅ Tambahkan tinggi minimum agar ukuran tetap -->
       `}
       onClick={onClick}
     >
       {/* Kiri: Nama dan status */}
       <div className="flex flex-col">
         <div className="flex items-center mb-0.5">
-          <h3 className="text-gray-200 font-medium text-sm">{name}</h3>
+          <h3 className="text-gray-200 font-semibold text-base">{name}</h3>
           <span
             className={`ml-2 text-[10px] px-2 py-0.5 rounded-full ${statusColors[status]}`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         </div>
-        <p className="text-lg font-bold text-white leading-snug">
-          {formattedValue}{' '}
-          <span className="text-xs font-normal text-gray-400">{unit}</span>
-        </p>
+        {/* <p className="text-xs font-normal text-gray-400">{unit}</p> */}
       </div>
 
       {/* Kanan: Perubahan */}
