@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { BatteryCharging, BatteryFull, BatteryLow, BatteryWarning, Network, User } from 'lucide-react';
+import {
+  BatteryCharging,
+  BatteryFull,
+  BatteryLow,
+  BatteryWarning,
+  Network,
+} from 'lucide-react';
 import MetaLogo from '../assets/meta_logo-2-removebg-preview.png';
 import { Capacitor } from '@capacitor/core';
 import { useWebSocketConfig } from '../context/WebSocketConfigContext';
@@ -105,10 +111,6 @@ const Navbar: React.FC = () => {
               <span className="text-xs text-gray-400">({batteryVoltage.toFixed(2)}V)</span>
             </div>
           )}
-
-          <button className="p-2 rounded-full hover:bg-gray-800 transition-colors">
-            <User className="h-5 w-5 text-gray-300" />
-          </button>
         </div>
       </div>
     </header>
