@@ -135,7 +135,7 @@ const MultiBiosignalView: React.FC = () => {
 
   const restartServer = async () => {
     try {
-      const res = await fetch("http://${ip}:8000/restart", {
+      const res = await fetch(`http://${ip}:8000/restart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ script_name: "server_mbs.py" }),
