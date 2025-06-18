@@ -6,7 +6,7 @@ interface HeaderProps {
   isRecording: boolean;
   statusCounts: { all: number };
   formattedTime: string;
-  elapsedTime: string;
+  elapsedTime: string; // tetap disediakan jika dibutuhkan oleh parent
   reconnect: () => void;
   toggleRecording: () => void;
   onDownload: () => void;
@@ -75,11 +75,6 @@ const Header: React.FC<HeaderProps> = ({
             {isConnected ? "Connected" : "Disconnected"}
           </span>
         </p>
-        {isRecording && (
-          <p className="text-yellow-300 text-sm mt-1">
-            ⏱️ Recording time: {elapsedTime}
-          </p>
-        )}
       </div>
 
       <div className="flex items-center mt-4 md:mt-0 space-x-2">

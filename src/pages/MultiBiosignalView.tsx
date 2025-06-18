@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import StatusCards from "../components/MBS/StatusCards";
 import SensorCard from "../components/MBS/SensorCard";
@@ -200,20 +202,16 @@ const MultiBiosignalView: React.FC = () => {
         formattedTime={formattedTime}
         reconnect={reconnect}
         toggleRecording={toggleRecording}
-        onDownload={() => {}}
+        onDownload={() => { }}
         elapsedTime={elapsedTime}
       />
 
-      <div className="flex justify-end">
-        <button
-          className="text-sm bg-gray-700 px-3 py-1 rounded hover:bg-gray-600 transition"
-          onClick={() => setCompactView((prev) => !prev)}
-        >
-          {compactView ? "🔎 Expand View" : "📊 Compact View"}
-        </button>
-      </div>
-
-      <StatusCards counts={statusCounts} />
+      <StatusCards
+        counts={statusCounts}
+        compactView={compactView}
+        toggleCompactView={() => setCompactView((prev) => !prev)}
+        elapsedTime={elapsedTime}
+      />
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-auto max-w-xs space-y-2">
@@ -232,8 +230,6 @@ const MultiBiosignalView: React.FC = () => {
                     <SensorCard
                       key={sensorName}
                       name={sensorName}
-                      status={sensor?.status || "normal"}
-                      change={sensor?.change || 0}
                       onClick={() => toggleSensorSelection(sensorName)}
                       isSelected={selectedSensors.includes(sensorName)}
                     />
