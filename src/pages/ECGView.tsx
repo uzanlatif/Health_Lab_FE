@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
 import Header from "../components/ECG/Header";
 import SensorCard from "../components/ECG/SensorCard";
 import SensorChart from "../components/ECG/SensorChart";
@@ -8,15 +8,18 @@ import StatusCards from "../components/ECG/StatusCards";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingECG";
 import { useWebSocketConfig } from "../context/WebSocketConfigContext";
+import { useRecorder } from "../hooks/useRecording";
 
 const ECGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordStartTime, setRecordStartTime] = useState<Date | null>(null);
-  const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
   const [compactView, setCompactView] = useState(true);
+  const [elapsedTime, setElapsedTime] = useState("00:00:00");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<Date | null>(null);
+
+  const { isRecording, start, stop, clear: clearCache, addData } = useRecorder();
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_ECG;
@@ -25,93 +28,60 @@ const ECGView: React.FC = () => {
   const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
-  const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
-  // ⏱ Update elapsed time while recording
-  useEffect(() => {
-    if (!isRecording || !recordStartTime) return;
-    const interval = setInterval(() => {
-      const now = new Date();
-      const seconds = Math.floor((now.getTime() - recordStartTime.getTime()) / 1000);
-      const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
-      const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
-      const ss = String(seconds % 60).padStart(2, "0");
-      setElapsedTime(`${hh}:${mm}:${ss}`);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [isRecording, recordStartTime]);
-
-  // 📡 Sensor data processing
+  // 🧠 Buffer and recording logic
   useEffect(() => {
     if (!sensorData) return;
-    for (const sensorName of selectedSensors) {
-      const newValues = sensorData[sensorName];
-      if (!Array.isArray(newValues)) continue;
 
-      const currentBuffer = dataBufferRef.current[sensorName] || [];
-      const newBuffer = newValues
+    addData(
+      Object.fromEntries(
+        Object.entries(sensorData).map(([key, val]) => [key, val[val.length - 1]?.y ?? 0])
+      )
+    );
+
+    for (const sensorName of selectedSensors) {
+      const values = sensorData[sensorName];
+      if (!Array.isArray(values)) continue;
+
+      const current = dataBufferRef.current[sensorName] || [];
+      const newBuffer = values
         .filter((v) => typeof v.y === "number" && !isNaN(v.y) && typeof v.__timestamp__ === "number")
         .map((v) => ({ x: new Date(v.__timestamp__ * 1000), y: v.y }));
 
-      const merged = [...currentBuffer, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);
-      dataBufferRef.current[sensorName] = merged;
-
-      if (isRecording) {
-        if (!recordedLogsRef.current[sensorName]) recordedLogsRef.current[sensorName] = [];
-        recordedLogsRef.current[sensorName].push(...newBuffer);
-      }
+      dataBufferRef.current[sensorName] = [...current, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);
     }
   }, [sensorData, selectedSensors, timeRange, isRecording]);
 
-  const toggleRecording = () => {
-    setIsRecording((prev) => {
-      const next = !prev;
-      if (next) {
-        recordedLogsRef.current = {};
-        setRecordStartTime(new Date());
-      } else {
-        const exportData: Record<string, { x: string; y: number }[]> = {};
-        for (const [key, records] of Object.entries(recordedLogsRef.current)) {
-          exportData[key] = records.map(({ x, y }) => ({ x: new Date(x).toISOString(), y }));
-        }
-        localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
-        console.log("✅ ECG logs saved to localStorage.");
-        setRecordStartTime(null);
-        setElapsedTime("00:00:00");
-      }
-      return next;
-    });
-  };
+  // ⏱ Timer logic
+  useEffect(() => {
+    if (!isRecording) {
+      clearInterval(timerRef.current!);
+      setElapsedTime("00:00:00");
+      return;
+    }
 
-  const clearCache = () => {
-    recordedLogsRef.current = {};
-    console.log("🧹 ECG cache cleared.");
-  };
+    startTimeRef.current = new Date();
+    timerRef.current = setInterval(() => {
+      const now = new Date();
+      const elapsed = Math.floor((now.getTime() - startTimeRef.current!.getTime()) / 1000);
+      const hh = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
+      const ss = String(elapsed % 60).padStart(2, "0");
+      setElapsedTime(`${hh}:${mm}:${ss}`);
+    }, 1000);
 
-  const toggleSensorSelection = (sensorName: string) => {
-    setSelectedSensors((prev) =>
-      prev.includes(sensorName)
-        ? prev.filter((name) => name !== sensorName)
-        : [...prev, sensorName]
-    );
-  };
-
-  const toggleNotchFilter = (sensorName: string) => {
-    setNotchEnabledSensors((prev) => ({
-      ...prev,
-      [sensorName]: !prev[sensorName],
-    }));
-  };
+    return () => clearInterval(timerRef.current!);
+  }, [isRecording]);
 
   const processedData = useMemo(() => {
-    const selectedBuffer: Record<string, { x: Date; y: number }[]> = {};
+    const selected: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {
       if (dataBufferRef.current[name]) {
-        selectedBuffer[name] = dataBufferRef.current[name];
+        selected[name] = dataBufferRef.current[name];
       }
     }
-    return processSensorData(selectedBuffer);
+    return processSensorData(selected);
   }, [sensorData, selectedSensors, timeRange]);
 
   const formattedTime = useMemo(
@@ -125,9 +95,9 @@ const ECGView: React.FC = () => {
   const statusCounts = useMemo(
     () => ({
       all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
-      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
+      critical: 0,
+      warning: 0,
+      normal: 0,
     }),
     [processedData]
   );
@@ -139,6 +109,21 @@ const ECGView: React.FC = () => {
     ],
   };
 
+  const runServerECG = async () => {
+    try {
+      const res = await fetch(`http://${ip}:8000/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ script_name: "server_ecg.py" }),
+      });
+      const data = await res.json();
+      alert(data.message || "Server started.");
+    } catch (err) {
+      alert("Failed to start server.");
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-6 text-gray-100">
       <Header
@@ -148,7 +133,7 @@ const ECGView: React.FC = () => {
         formattedTime={formattedTime}
         elapsedTime={elapsedTime}
         reconnect={reconnect}
-        toggleRecording={toggleRecording}
+        toggleRecording={isRecording ? stop : start}
         onDownload={() => {}}
         clearCache={clearCache}
       />
@@ -158,13 +143,16 @@ const ECGView: React.FC = () => {
         compactView={compactView}
         toggleCompactView={() => setCompactView((prev) => !prev)}
         elapsedTime={elapsedTime}
-        onRestartServer={() => {}}
+        onRestartServer={runServerECG}
       />
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
-            <div key={category} className="bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-600">
+            <div
+              key={category}
+              className="bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-600"
+            >
               <h2 className="text-lg font-semibold text-gray-100 capitalize mb-3">
                 {category} Signals
               </h2>
@@ -173,7 +161,13 @@ const ECGView: React.FC = () => {
                   <SensorCard
                     key={sensorName}
                     name={sensorName}
-                    onClick={() => toggleSensorSelection(sensorName)}
+                    onClick={() => {
+                      setSelectedSensors((prev) =>
+                        prev.includes(sensorName)
+                          ? prev.filter((name) => name !== sensorName)
+                          : [...prev, sensorName]
+                      );
+                    }}
                     isSelected={selectedSensors.includes(sensorName)}
                   />
                 ))}
@@ -190,7 +184,10 @@ const ECGView: React.FC = () => {
                 if (!sensor || !Array.isArray(sensor.chartData)) return null;
 
                 return (
-                  <div key={sensorName} className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600">
+                  <div
+                    key={sensorName}
+                    className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600"
+                  >
                     <div className="flex justify-between items-center mb-2">
                       <h2 className="text-lg font-semibold text-gray-100 truncate">
                         {sensor.displayName || sensorName} Logs
@@ -199,7 +196,12 @@ const ECGView: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={!!notchEnabledSensors[sensorName]}
-                          onChange={() => toggleNotchFilter(sensorName)}
+                          onChange={() =>
+                            setNotchEnabledSensors((prev) => ({
+                              ...prev,
+                              [sensorName]: !prev[sensorName],
+                            }))
+                          }
                         />
                         60Hz Notch Filter
                       </label>

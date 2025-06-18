@@ -66,7 +66,7 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between">
       <div>
-        <h1 className="text-2xl font-bold text-white">EEG Monitor</h1>
+        <h1 className="text-2xl font-bold text-white">ECG Monitor</h1>
         <p className="text-gray-300">
           Monitoring {statusCounts.all} health sensors | Last updated: {formattedTime}
           <span
