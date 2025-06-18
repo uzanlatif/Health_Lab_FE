@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 
 interface StatusCardsProps {
@@ -10,6 +12,7 @@ interface StatusCardsProps {
   compactView: boolean;
   toggleCompactView: () => void;
   elapsedTime: string;
+  onRestartServer: () => void;
 }
 
 const cardStyle =
@@ -23,6 +26,7 @@ const StatusCards: React.FC<StatusCardsProps> = ({
   compactView,
   toggleCompactView,
   elapsedTime,
+  onRestartServer,
 }) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-5 w-full">
@@ -66,6 +70,24 @@ const StatusCards: React.FC<StatusCardsProps> = ({
             onClick={toggleCompactView}
           >
             {compactView ? "🔎 Expand View" : "📊 Compact View"}
+          </button>
+        </div>
+      </div>
+
+      {/* Restart Server */}
+      <div className={cardStyle}>
+        <div className="flex flex-col h-full justify-between">
+          <p className={labelStyle}>Server</p>
+          <button
+            className={`
+              mt-3 text-sm font-medium px-4 py-2 rounded-lg
+              bg-blue-800 text-white hover:bg-blue-600
+              shadow-md hover:shadow-lg ring-1 ring-blue-400
+              transition-all duration-300
+            `}
+            onClick={onRestartServer}
+          >
+            🔁 Restart Server
           </button>
         </div>
       </div>

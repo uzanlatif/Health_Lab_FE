@@ -133,6 +133,21 @@ const MultiBiosignalView: React.FC = () => {
     "EEG CH16": "#F87171",
   };
 
+  const restartServer = async () => {
+    try {
+      const res = await fetch("http://${ip}:8000/restart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ script_name: "server_mbs.py" }),
+      });
+      const data = await res.json();
+      alert(data.message || "Server restarted.");
+    } catch (err) {
+      alert("Failed to restart server.");
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-6 text-gray-100">
       <Header
@@ -152,6 +167,7 @@ const MultiBiosignalView: React.FC = () => {
         compactView={compactView}
         toggleCompactView={() => setCompactView((prev) => !prev)}
         elapsedTime={elapsedTime}
+        onRestartServer={restartServer}
       />
 
       <div className="flex flex-col lg:flex-row gap-6">
