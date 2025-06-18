@@ -117,7 +117,7 @@ const ECGView: React.FC = () => {
         body: JSON.stringify({ script_name: "server_ecg.py" }),
       });
       const data = await res.json();
-      alert(data.message || "Server started.");
+      // alert(data.message || "Server started.");
     } catch (err) {
       alert("Failed to start server.");
       console.error(err);
