@@ -14,9 +14,9 @@ const SensorCard: React.FC<SensorCardProps> = ({
   return (
     <div
       className={`
-        flex justify-between items-center p-2 rounded-md shadow-sm transition
+        flex justify-between items-center p-3 rounded-md shadow-sm transition
         cursor-pointer hover:bg-gray-800
-        text-sm w-full max-w-[260px] bg-gray-900 text-gray-100
+        text-sm w-full bg-gray-900 text-gray-100
         border-l-4 border-blue-500
         ${isSelected ? 'ring-2 ring-blue-400 bg-gray-800' : ''}
         min-h-[72px]
@@ -30,7 +30,7 @@ const SensorCard: React.FC<SensorCardProps> = ({
         </div>
       </div>
 
-      {/* Kanan: Kosong untuk keseimbangan layout */}
+      {/* Kanan: Placeholder kosong */}
       <div className="w-4 h-4" />
     </div>
   );
