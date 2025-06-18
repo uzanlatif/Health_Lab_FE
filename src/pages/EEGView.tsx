@@ -1,8 +1,10 @@
+"use client";
+
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import StatusCards from "../components/EEG/StatusCards";
+import Header from "../components/EEG/Header";
 import SensorCard from "../components/EEG/SensorCard";
 import SensorChart from "../components/EEG/SensorChart";
-import Header from "../components/EEG/Header";
+import StatusCards from "../components/EEG/StatusCards";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingEEG";
 import { useWebSocketConfig } from "../context/WebSocketConfigContext";
@@ -11,7 +13,7 @@ const EEGView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
   const [isRecording, setIsRecording] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
-  const [elapsedTime, setElapsedTime] = useState("00:00");
+  const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
   const [compactView, setCompactView] = useState(true);
@@ -20,59 +22,44 @@ const EEGView: React.FC = () => {
   const port = import.meta.env.VITE_PORT_EEG;
   const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
-  const {
-    data: sensorData,
-    lastUpdated,
-    reconnect,
-    isConnected,
-  } = useWebSocket(websocketUrl);
+  const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
+  // Recording timer effect
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (isRecording) {
       setStartTime(Date.now());
       timer = setInterval(() => {
-        if (startTime) {
-          const seconds = Math.floor((Date.now() - startTime) / 1000);
-          const mins = String(Math.floor(seconds / 60)).padStart(2, "0");
-          const secs = String(seconds % 60).padStart(2, "0");
-          setElapsedTime(`${mins}:${secs}`);
-        }
+        const seconds = Math.floor((Date.now() - (startTime || Date.now())) / 1000);
+        const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
+        const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+        const ss = String(seconds % 60).padStart(2, "0");
+        setElapsedTime(`${hh}:${mm}:${ss}`);
       }, 1000);
     } else {
       setStartTime(null);
-      setElapsedTime("00:00");
+      setElapsedTime("00:00:00");
     }
     return () => clearInterval(timer);
   }, [isRecording, startTime]);
 
+  // Sensor data update effect
   useEffect(() => {
     if (!sensorData) return;
-
     for (const sensorName of selectedSensors) {
       const newValues = sensorData[sensorName];
       if (!Array.isArray(newValues)) continue;
 
       const currentBuffer = dataBufferRef.current[sensorName] || [];
       const newBuffer = newValues
-        .filter(
-          (v) =>
-            typeof v.y === "number" &&
-            !isNaN(v.y) &&
-            typeof v.__timestamp__ === "number"
-        )
-        .map((v) => ({
-          x: new Date(v.__timestamp__ * 1000),
-          y: v.y,
-        }));
+        .filter((v) => typeof v.y === "number" && !isNaN(v.y) && typeof v.__timestamp__ === "number")
+        .map((v) => ({ x: new Date(v.__timestamp__ * 1000), y: v.y }));
 
-      const merged = [...currentBuffer, ...newBuffer].slice(
-        -MAX_BUFFER_SIZE[timeRange]
-      );
+      const merged = [...currentBuffer, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);
       dataBufferRef.current[sensorName] = merged;
 
       if (isRecording) {
@@ -84,6 +71,7 @@ const EEGView: React.FC = () => {
     }
   }, [sensorData, selectedSensors, timeRange, isRecording]);
 
+  // Recording toggle handler
   const toggleRecording = () => {
     setIsRecording((prev) => {
       const next = !prev;
@@ -92,10 +80,7 @@ const EEGView: React.FC = () => {
       } else {
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
-          exportData[key] = records.map(({ x, y }) => ({
-            x: new Date(x).toISOString(),
-            y,
-          }));
+          exportData[key] = records.map(({ x, y }) => ({ x: new Date(x).toISOString(), y }));
         }
         localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
         console.log("✅ EEG logs saved to localStorage.");
@@ -104,15 +89,28 @@ const EEGView: React.FC = () => {
     });
   };
 
+  // Restart server POST request
+  const restartServer = async () => {
+    try {
+      const res = await fetch(`http://${ip}:8000/restart`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ script_name: "server_eeg.py" }),
+      });
+      const data = await res.json();
+      alert(data.message || "Server restarted.");
+    } catch (err) {
+      alert("Failed to restart server.");
+      console.error(err);
+    }
+  };
+
   const toggleSensorSelection = (sensorName: string) => {
-    setSelectedSensors((prev) => {
-      if (prev.includes(sensorName)) {
-        delete dataBufferRef.current[sensorName];
-        return prev.filter((name) => name !== sensorName);
-      } else {
-        return [...prev, sensorName];
-      }
-    });
+    setSelectedSensors((prev) =>
+      prev.includes(sensorName)
+        ? prev.filter((name) => name !== sensorName)
+        : [...prev, sensorName]
+    );
   };
 
   const toggleNotchFilter = (sensorName: string) => {
@@ -120,6 +118,10 @@ const EEGView: React.FC = () => {
       ...prev,
       [sensorName]: !prev[sensorName],
     }));
+  };
+
+  const clearCache = () => {
+    recordedLogsRef.current = {};
   };
 
   const processedData = useMemo(() => {
@@ -165,20 +167,19 @@ const EEGView: React.FC = () => {
         reconnect={reconnect}
         toggleRecording={toggleRecording}
         onDownload={() => {}}
+        clearCache={clearCache}
       />
 
-      <div className="flex justify-end">
-        <button
-          className="text-sm bg-gray-700 px-3 py-1 rounded hover:bg-gray-600 transition"
-          onClick={() => setCompactView((prev) => !prev)}
-        >
-          {compactView ? "🔎 Expand View" : "📊 Compact View"}
-        </button>
-      </div>
-
-      <StatusCards counts={statusCounts} />
+      <StatusCards
+        counts={statusCounts}
+        compactView={compactView}
+        toggleCompactView={() => setCompactView((prev) => !prev)}
+        elapsedTime={elapsedTime}
+        onRestartServer={restartServer}
+      />
 
       <div className="flex flex-col lg:flex-row gap-6">
+        {/* Sidebar */}
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
             <div
@@ -189,27 +190,29 @@ const EEGView: React.FC = () => {
                 {category} Signals
               </h2>
               <div className="flex flex-col gap-2">
-                {sensors.map((sensorName) => {
-                  const sensor = processedData[sensorName];
-                  return (
-                    <SensorCard
-                      key={sensorName}
-                      name={sensorName}
-                      status={sensor?.status || "normal"}
-                      change={sensor?.change || 0}
-                      onClick={() => toggleSensorSelection(sensorName)}
-                      isSelected={selectedSensors.includes(sensorName)}
-                    />
-                  );
-                })}
+                {sensors.map((sensorName) => (
+                  <SensorCard
+                    key={sensorName}
+                    name={sensorName}
+                    onClick={() => toggleSensorSelection(sensorName)}
+                    isSelected={selectedSensors.includes(sensorName)}
+                  />
+                ))}
               </div>
             </div>
           ))}
         </div>
 
+        {/* Charts */}
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
-            <div className={compactView ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
+            <div
+              className={
+                compactView
+                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                  : "flex flex-col gap-4"
+              }
+            >
               {selectedSensors.map((sensorName) => {
                 const sensor = processedData[sensorName];
                 if (!sensor || !Array.isArray(sensor.chartData)) return null;

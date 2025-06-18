@@ -132,22 +132,7 @@ const MultiBiosignalView: React.FC = () => {
     "EEG CH15": "#FB7185",
     "EEG CH16": "#F87171",
   };
-
-  // const restartServer = async () => {
-  //   try {
-  //     const res = await fetch(`http://${ip}:8000/restart`, {
-  //       method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ script_name: "server_mbs.py" }),
-  //     });
-  //     const data = await res.json();
-  //     alert(data.message || "Server restarted.");
-  //   } catch (err) {
-  //     alert("Failed to restart server.");
-  //     console.error(err);
-  //   }
-  // };
-
+  
   const runServerMBS = async () => {
     try {
       const res = await fetch(`http://${ip}:8000/run`, {
@@ -184,15 +169,6 @@ const MultiBiosignalView: React.FC = () => {
         elapsedTime={elapsedTime}
         onRestartServer={runServerMBS}
       />
-
-      {/* <div className="flex gap-2 px-4">
-        <button
-          onClick={runServerMBS}
-          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white"
-        >
-          Run MBS Server
-        </button>
-      </div> */}
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-auto max-w-xs space-y-2">

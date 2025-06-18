@@ -1,8 +1,10 @@
+"use client";
+
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import StatusCards from "../components/ECG/StatusCards";
+import Header from "../components/ECG/Header";
 import SensorCard from "../components/ECG/SensorCard";
 import SensorChart from "../components/ECG/SensorChart";
-import Header from "../components/ECG/Header";
+import StatusCards from "../components/ECG/StatusCards";
 import useWebSocket from "../hooks/useWebSocket";
 import { processSensorData } from "../utils/dataProcessingECG";
 import { useWebSocketConfig } from "../context/WebSocketConfigContext";
@@ -20,61 +22,43 @@ const ECGView: React.FC = () => {
   const port = import.meta.env.VITE_PORT_ECG;
   const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
-  const {
-    data: sensorData,
-    lastUpdated,
-    reconnect,
-    isConnected,
-  } = useWebSocket(websocketUrl);
+  const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket(websocketUrl);
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
-  // Update elapsed time
+  // ⏱ Update elapsed time while recording
   useEffect(() => {
     if (!isRecording || !recordStartTime) return;
-
     const interval = setInterval(() => {
       const now = new Date();
-      const diff = Math.floor((now.getTime() - recordStartTime.getTime()) / 1000);
-      const hours = String(Math.floor(diff / 3600)).padStart(2, "0");
-      const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
-      const seconds = String(diff % 60).padStart(2, "0");
-      setElapsedTime(`${hours}:${minutes}:${seconds}`);
+      const seconds = Math.floor((now.getTime() - recordStartTime.getTime()) / 1000);
+      const hh = String(Math.floor(seconds / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0");
+      const ss = String(seconds % 60).padStart(2, "0");
+      setElapsedTime(`${hh}:${mm}:${ss}`);
     }, 1000);
-
     return () => clearInterval(interval);
   }, [isRecording, recordStartTime]);
 
-  // Buffer and record sensor data
+  // 📡 Sensor data processing
   useEffect(() => {
     if (!sensorData) return;
-
     for (const sensorName of selectedSensors) {
       const newValues = sensorData[sensorName];
       if (!Array.isArray(newValues)) continue;
 
       const currentBuffer = dataBufferRef.current[sensorName] || [];
       const newBuffer = newValues
-        .filter(
-          (v) =>
-            typeof v.y === "number" &&
-            !isNaN(v.y) &&
-            typeof v.__timestamp__ === "number"
-        )
-        .map((v) => ({
-          x: new Date(v.__timestamp__ * 1000),
-          y: v.y,
-        }));
+        .filter((v) => typeof v.y === "number" && !isNaN(v.y) && typeof v.__timestamp__ === "number")
+        .map((v) => ({ x: new Date(v.__timestamp__ * 1000), y: v.y }));
 
       const merged = [...currentBuffer, ...newBuffer].slice(-MAX_BUFFER_SIZE[timeRange]);
       dataBufferRef.current[sensorName] = merged;
 
       if (isRecording) {
-        if (!recordedLogsRef.current[sensorName]) {
-          recordedLogsRef.current[sensorName] = [];
-        }
+        if (!recordedLogsRef.current[sensorName]) recordedLogsRef.current[sensorName] = [];
         recordedLogsRef.current[sensorName].push(...newBuffer);
       }
     }
@@ -89,13 +73,10 @@ const ECGView: React.FC = () => {
       } else {
         const exportData: Record<string, { x: string; y: number }[]> = {};
         for (const [key, records] of Object.entries(recordedLogsRef.current)) {
-          exportData[key] = records.map(({ x, y }) => ({
-            x: new Date(x).toISOString(),
-            y,
-          }));
+          exportData[key] = records.map(({ x, y }) => ({ x: new Date(x).toISOString(), y }));
         }
         localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
-        console.log("✅ Recorded logs saved to localStorage.");
+        console.log("✅ ECG logs saved to localStorage.");
         setRecordStartTime(null);
         setElapsedTime("00:00:00");
       }
@@ -103,15 +84,17 @@ const ECGView: React.FC = () => {
     });
   };
 
+  const clearCache = () => {
+    recordedLogsRef.current = {};
+    console.log("🧹 ECG cache cleared.");
+  };
+
   const toggleSensorSelection = (sensorName: string) => {
-    setSelectedSensors((prev) => {
-      if (prev.includes(sensorName)) {
-        delete dataBufferRef.current[sensorName];
-        return prev.filter((name) => name !== sensorName);
-      } else {
-        return [...prev, sensorName];
-      }
-    });
+    setSelectedSensors((prev) =>
+      prev.includes(sensorName)
+        ? prev.filter((name) => name !== sensorName)
+        : [...prev, sensorName]
+    );
   };
 
   const toggleNotchFilter = (sensorName: string) => {
@@ -167,43 +150,33 @@ const ECGView: React.FC = () => {
         reconnect={reconnect}
         toggleRecording={toggleRecording}
         onDownload={() => {}}
+        clearCache={clearCache}
       />
 
-      <div className="flex justify-end">
-        <button
-          className="text-sm bg-gray-700 px-3 py-1 rounded hover:bg-gray-600 transition"
-          onClick={() => setCompactView((prev) => !prev)}
-        >
-          {compactView ? "🔎 Expand View" : "📊 Compact View"}
-        </button>
-      </div>
-
-      <StatusCards counts={statusCounts} />
+      <StatusCards
+        counts={statusCounts}
+        compactView={compactView}
+        toggleCompactView={() => setCompactView((prev) => !prev)}
+        elapsedTime={elapsedTime}
+        onRestartServer={() => {}}
+      />
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="w-auto max-w-xs space-y-2">
           {Object.entries(sensorGroups).map(([category, sensors]) => (
-            <div
-              key={category}
-              className="bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-600"
-            >
+            <div key={category} className="bg-gray-800 p-2 rounded-lg shadow-sm border border-gray-600">
               <h2 className="text-lg font-semibold text-gray-100 capitalize mb-3">
                 {category} Signals
               </h2>
               <div className="flex flex-col gap-2">
-                {sensors.map((sensorName) => {
-                  const sensor = processedData[sensorName];
-                  return (
-                    <SensorCard
-                      key={sensorName}
-                      name={sensorName}
-                      status={sensor?.status || "normal"}
-                      change={sensor?.change || 0}
-                      onClick={() => toggleSensorSelection(sensorName)}
-                      isSelected={selectedSensors.includes(sensorName)}
-                    />
-                  );
-                })}
+                {sensors.map((sensorName) => (
+                  <SensorCard
+                    key={sensorName}
+                    name={sensorName}
+                    onClick={() => toggleSensorSelection(sensorName)}
+                    isSelected={selectedSensors.includes(sensorName)}
+                  />
+                ))}
               </div>
             </div>
           ))}
@@ -217,10 +190,7 @@ const ECGView: React.FC = () => {
                 if (!sensor || !Array.isArray(sensor.chartData)) return null;
 
                 return (
-                  <div
-                    key={sensorName}
-                    className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600"
-                  >
+                  <div key={sensorName} className="bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-600">
                     <div className="flex justify-between items-center mb-2">
                       <h2 className="text-lg font-semibold text-gray-100 truncate">
                         {sensor.displayName || sensorName} Logs
