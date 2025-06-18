@@ -1,139 +1,102 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useMemo, useRef, useEffect, useState } from "react";
+import Header from "../components/MBS/Header";
 import StatusCards from "../components/MBS/StatusCards";
 import SensorCard from "../components/MBS/SensorCard";
 import SensorChart from "../components/MBS/SensorChart";
-import Header from "../components/MBS/Header";
 import useWebSocket from "../hooks/useWebSocket";
-import { processSensorData } from "../utils/dataProcessingMBS";
 import { useWebSocketConfig } from "../context/WebSocketConfigContext";
+import { processSensorData } from "../utils/dataProcessingMBS";
+import { useRecorder } from "../hooks/useRecording";
 
 const MultiBiosignalView: React.FC = () => {
   const [timeRange, setTimeRange] = useState<"1h" | "6h" | "24h">("6h");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordStartTime, setRecordStartTime] = useState<Date | null>(null);
-  const [elapsedTime, setElapsedTime] = useState<string>("00:00:00");
   const [selectedSensors, setSelectedSensors] = useState<string[]>([]);
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
   const [compactView, setCompactView] = useState(true);
+  const [elapsedTime, setElapsedTime] = useState("00:00:00");
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<Date | null>(null);
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_MBS;
   const websocketUrl = useMemo(() => `ws://${ip}:${port}`, [ip, port]);
 
+  const { data: sensorData, lastUpdated, reconnect, isConnected } = useWebSocket(websocketUrl);
+
   const {
-    data: sensorData,
-    lastUpdated,
-    reconnect,
-    isConnected,
-  } = useWebSocket(websocketUrl);
+    isRecording,
+    start,
+    stop,
+    clear: clearCache,
+    addData,
+  } = useRecorder();
 
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
-  const recordedLogsRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
   useEffect(() => {
     if (!sensorData) return;
 
+    const now = new Date();
+    addData(
+      Object.fromEntries(
+        Object.entries(sensorData).map(([key, val]) => [key, val[val.length - 1]?.y ?? 0])
+      )
+    );
+
     for (const sensorName of selectedSensors) {
-      const newValues = sensorData[sensorName];
-      if (!Array.isArray(newValues)) continue;
+      const values = sensorData[sensorName];
+      if (!Array.isArray(values)) continue;
 
-      const currentBuffer = dataBufferRef.current[sensorName] || [];
-      const newBuffer = newValues
-        .filter(
-          (v) =>
-            typeof v.y === "number" &&
-            !isNaN(v.y) &&
-            typeof v.__timestamp__ === "number"
-        )
-        .map((v) => ({
-          x: new Date(v.__timestamp__ * 1000),
-          y: v.y,
-        }));
+      const current = dataBufferRef.current[sensorName] || [];
+      const newBuffer = values
+        .filter((v) => typeof v.y === "number" && !isNaN(v.y) && typeof v.__timestamp__ === "number")
+        .map((v) => ({ x: new Date(v.__timestamp__ * 1000), y: v.y }));
 
-      const merged = [...currentBuffer, ...newBuffer].slice(
+      dataBufferRef.current[sensorName] = [...current, ...newBuffer].slice(
         -MAX_BUFFER_SIZE[timeRange]
       );
-      dataBufferRef.current[sensorName] = merged;
-
-      if (isRecording) {
-        if (!recordedLogsRef.current[sensorName]) {
-          recordedLogsRef.current[sensorName] = [];
-        }
-        recordedLogsRef.current[sensorName].push(...newBuffer);
-      }
     }
   }, [sensorData, selectedSensors, timeRange, isRecording]);
 
   useEffect(() => {
-    if (!isRecording || !recordStartTime) return;
+    if (!isRecording) {
+      clearInterval(timerRef.current!);
+      setElapsedTime("00:00:00");
+      return;
+    }
 
-    const interval = setInterval(() => {
+    startTimeRef.current = new Date();
+    timerRef.current = setInterval(() => {
       const now = new Date();
-      const diff = Math.floor((now.getTime() - recordStartTime.getTime()) / 1000);
-
-      const hours = String(Math.floor(diff / 3600)).padStart(2, "0");
-      const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, "0");
-      const seconds = String(diff % 60).padStart(2, "0");
-
-      setElapsedTime(`${hours}:${minutes}:${seconds}`);
+      const elapsed = Math.floor((now.getTime() - startTimeRef.current!.getTime()) / 1000);
+      const hh = String(Math.floor(elapsed / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
+      const ss = String(elapsed % 60).padStart(2, "0");
+      setElapsedTime(`${hh}:${mm}:${ss}`);
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [isRecording, recordStartTime]);
-
-  const toggleRecording = () => {
-    setIsRecording((prev) => {
-      const next = !prev;
-      if (next) {
-        recordedLogsRef.current = {};
-        setRecordStartTime(new Date());
-      } else {
-        const exportData: Record<string, { x: string; y: number }[]> = {};
-        for (const [key, records] of Object.entries(recordedLogsRef.current)) {
-          exportData[key] = records.map(({ x, y }) => ({
-            x: new Date(x).toISOString(),
-            y,
-          }));
-        }
-        localStorage.setItem("recordedSensorData", JSON.stringify(exportData));
-        console.log("✅ Recorded logs saved to localStorage.");
-        setRecordStartTime(null);
-        setElapsedTime("00:00:00");
-      }
-      return next;
-    });
-  };
-
-  const toggleSensorSelection = (sensorName: string) => {
-    setSelectedSensors((prev) => {
-      if (prev.includes(sensorName)) {
-        delete dataBufferRef.current[sensorName];
-        return prev.filter((name) => name !== sensorName);
-      } else {
-        return [...prev, sensorName];
-      }
-    });
-  };
-
-  const toggleNotchFilter = (sensorName: string) => {
-    setNotchEnabledSensors((prev) => ({
-      ...prev,
-      [sensorName]: !prev[sensorName],
-    }));
-  };
+    return () => clearInterval(timerRef.current!);
+  }, [isRecording]);
 
   const processedData = useMemo(() => {
-    const selectedBuffer: Record<string, { x: Date; y: number }[]> = {};
+    const selected: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {
       if (dataBufferRef.current[name]) {
-        selectedBuffer[name] = dataBufferRef.current[name];
+        selected[name] = dataBufferRef.current[name];
       }
     }
-    return processSensorData(selectedBuffer);
+    return processSensorData(selected);
   }, [sensorData, selectedSensors, timeRange]);
+
+  const statusCounts = useMemo(() => ({
+    all: Object.keys(processedData).length,
+    critical: 0,
+    warning: 0,
+    normal: 0,
+  }), [processedData]);
 
   const formattedTime = useMemo(
     () =>
@@ -143,15 +106,13 @@ const MultiBiosignalView: React.FC = () => {
     [lastUpdated]
   );
 
-  const statusCounts = useMemo(
-    () => ({
-      all: Object.keys(processedData).length,
-      critical: Object.values(processedData).filter((s) => s.status === "critical").length,
-      warning: Object.values(processedData).filter((s) => s.status === "warning").length,
-      normal: Object.values(processedData).filter((s) => s.status === "normal").length,
-    }),
-    [processedData]
-  );
+  const sensorGroups = {
+    Sensor: [
+      "ECG", "PPG", "PCG", "EMG1", "EMG2", "MYOMETER",
+      "SPIRO", "TEMPERATURE", "NIBP", "OXYGEN",
+      "EEG CH11", "EEG CH12", "EEG CH13", "EEG CH14", "EEG CH15", "EEG CH16",
+    ],
+  };
 
   const sensorColors: Record<string, string> = {
     ECG: "#10B981",
@@ -172,27 +133,6 @@ const MultiBiosignalView: React.FC = () => {
     "EEG CH16": "#F87171",
   };
 
-  const sensorGroups = {
-    Sensor: [
-      "ECG",
-      "PPG",
-      "PCG",
-      "EMG1",
-      "EMG2",
-      "MYOMETER",
-      "SPIRO",
-      "TEMPERATURE",
-      "NIBP",
-      "OXYGEN",
-      "EEG CH11",
-      "EEG CH12",
-      "EEG CH13",
-      "EEG CH14",
-      "EEG CH15",
-      "EEG CH16",
-    ],
-  };
-
   return (
     <div className="space-y-6 text-gray-100">
       <Header
@@ -200,10 +140,11 @@ const MultiBiosignalView: React.FC = () => {
         isRecording={isRecording}
         statusCounts={statusCounts}
         formattedTime={formattedTime}
-        reconnect={reconnect}
-        toggleRecording={toggleRecording}
-        onDownload={() => { }}
         elapsedTime={elapsedTime}
+        reconnect={reconnect}
+        toggleRecording={isRecording ? stop : start}
+        onDownload={() => {}}
+        clearCache={clearCache}
       />
 
       <StatusCards
@@ -224,17 +165,20 @@ const MultiBiosignalView: React.FC = () => {
                 {category} Signals
               </h2>
               <div className="flex flex-col gap-2">
-                {sensors.map((sensorName) => {
-                  const sensor = processedData[sensorName];
-                  return (
-                    <SensorCard
-                      key={sensorName}
-                      name={sensorName}
-                      onClick={() => toggleSensorSelection(sensorName)}
-                      isSelected={selectedSensors.includes(sensorName)}
-                    />
-                  );
-                })}
+                {sensors.map((sensorName) => (
+                  <SensorCard
+                    key={sensorName}
+                    name={sensorName}
+                    onClick={() => {
+                      setSelectedSensors((prev) =>
+                        prev.includes(sensorName)
+                          ? prev.filter((name) => name !== sensorName)
+                          : [...prev, sensorName]
+                      );
+                    }}
+                    isSelected={selectedSensors.includes(sensorName)}
+                  />
+                ))}
               </div>
             </div>
           ))}
@@ -242,13 +186,7 @@ const MultiBiosignalView: React.FC = () => {
 
         <div className="lg:w-full">
           {selectedSensors.length > 0 ? (
-            <div
-              className={
-                compactView
-                  ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
-                  : "flex flex-col gap-4"
-              }
-            >
+            <div className={compactView ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" : "flex flex-col gap-4"}>
               {selectedSensors.map((sensorName) => {
                 const sensor = processedData[sensorName];
                 if (!sensor || !Array.isArray(sensor.chartData)) return null;
@@ -266,7 +204,12 @@ const MultiBiosignalView: React.FC = () => {
                         <input
                           type="checkbox"
                           checked={!!notchEnabledSensors[sensorName]}
-                          onChange={() => toggleNotchFilter(sensorName)}
+                          onChange={() =>
+                            setNotchEnabledSensors((prev) => ({
+                              ...prev,
+                              [sensorName]: !prev[sensorName],
+                            }))
+                          }
                         />
                         60Hz Notch Filter
                       </label>

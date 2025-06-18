@@ -38,8 +38,8 @@ const StatusCards: React.FC<StatusCardsProps> = ({
       <div className={cardStyle}>
         <div>
           <p className={labelStyle}>Recording Time</p>
-          <p className="text-xl text-yellow-300 font-mono mt-1">
-            {elapsedTime !== "00:00:00" ? `⏱️ ${elapsedTime}` : "--:--:--"}
+          <p className="text-xl text-white font-mono mt-1">
+            {elapsedTime !== "00:00:00" ? elapsedTime : "--:--:--"}
           </p>
         </div>
       </div>
@@ -57,7 +57,12 @@ const StatusCards: React.FC<StatusCardsProps> = ({
         <div className="flex flex-col h-full justify-between">
           <p className={labelStyle}>View Mode</p>
           <button
-            className="mt-3 text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition"
+            className={`
+              mt-3 text-sm font-medium px-4 py-2 rounded-lg
+              bg-gray-700 text-white hover:bg-gray-600
+              shadow-md hover:shadow-lg ring-1 ring-gray-500
+              transition-all duration-300
+            `}
             onClick={toggleCompactView}
           >
             {compactView ? "🔎 Expand View" : "📊 Compact View"}
