@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   BatteryCharging,
   BatteryFull,
@@ -19,6 +19,8 @@ const Navbar: React.FC = () => {
   const [batteryVoltage, setBatteryVoltage] = useState<number | null>(null);
   const [batteryStatus, setBatteryStatus] = useState<string | null>(null);
 
+  const alertShownRef = useRef(false); // 🚨 prevent duplicate alert
+
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
@@ -31,9 +33,21 @@ const Navbar: React.FC = () => {
       try {
         const { voltage, capacity, status, error } = await window.batteryAPI.getBatteryStatus();
         if (error) return console.error("Battery error:", error);
+
         setBatteryLevel(capacity);
         setBatteryVoltage(voltage);
         setBatteryStatus(status);
+
+        // 🟡 Trigger alert when battery < 20% only once
+        if (capacity < 20 && !alertShownRef.current) {
+          alertShownRef.current = true;
+          alert("⚠️ Battery level is below 20%. Please charge your device.");
+        }
+
+        // Reset alert if battery goes back up
+        if (capacity >= 25) {
+          alertShownRef.current = false;
+        }
       } catch (err) {
         console.error("Battery fetch error:", err);
       }

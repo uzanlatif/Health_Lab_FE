@@ -130,7 +130,6 @@ const EEGView: React.FC = () => {
         body: JSON.stringify({ script_name: "server_eeg.py" }),
       });
       const data = await res.json();
-      // alert(data.message || "Server restarted.");
     } catch (err) {
       alert("Failed to restart server.");
       console.error(err);
