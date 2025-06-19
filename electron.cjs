@@ -1,4 +1,10 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  globalShortcut,
+  dialog,
+} = require("electron");
 const path = require("path");
 const i2c = require("i2c-bus");
 const fs = require("fs");
@@ -46,11 +52,21 @@ ipcMain.on("save-to-usb", async (_event, csvString) => {
     }
 
     if (!usbPath || !fs.existsSync(usbPath)) {
-      dialog.showErrorBox("USB Not Found", "No USB device is connected or mounted.");
+      dialog.showErrorBox(
+        "USB Not Found",
+        "No USB device is connected or mounted."
+      );
       return;
     }
 
-    const fileName = `biosignal-${Date.now()}.csv`;
+    const now = new Date();
+    const timestamp = now
+      .toISOString()
+      .replace(/[:.]/g, "-")
+      .replace("T", "_")
+      .split("Z")[0];
+    const fileName = `biosignal-${timestamp}.csv`;
+
     const targetPath = path.join(usbPath, fileName);
     fs.writeFileSync(targetPath, csvString);
 
