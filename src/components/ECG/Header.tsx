@@ -37,7 +37,9 @@ const Header: React.FC<HeaderProps> = ({
 
       Object.entries(parsed).forEach(([sensor, values]) => {
         values.forEach(({ x, y }) => {
-          const timeStr = new Date(x).toISOString();
+          const timeStr = new Date(x).toLocaleString("sv-SE", {
+            timeZone: "Asia/Seoul", // KST
+          }); // Format konsisten untuk Excel
           csv += `${sensor},${timeStr},${y}\n`;
         });
       });
@@ -62,9 +64,8 @@ const Header: React.FC<HeaderProps> = ({
         <p className="text-gray-300">
           Monitoring {statusCounts.all} health sensors | Last updated: {formattedTime}
           <span
-            className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              isConnected ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"
-            }`}
+            className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isConnected ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"
+              }`}
           >
             {isConnected ? "Connected" : "Disconnected"}
           </span>
@@ -87,10 +88,9 @@ const Header: React.FC<HeaderProps> = ({
         <button
           onClick={toggleRecording}
           className={`px-4 py-2 rounded-lg flex items-center font-medium shadow-md transition-all
-            ${
-              isRecording
-                ? "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:to-yellow-700 text-white ring-1 ring-yellow-300"
-                : "bg-gradient-to-r from-blue-500 to-blue-600 hover:to-blue-700 text-white ring-1 ring-blue-300"
+            ${isRecording
+              ? "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:to-yellow-700 text-white ring-1 ring-yellow-300"
+              : "bg-gradient-to-r from-blue-500 to-blue-600 hover:to-blue-700 text-white ring-1 ring-blue-300"
             }
           `}
         >

@@ -37,7 +37,9 @@ const Header: React.FC<HeaderProps> = ({
 
       Object.entries(parsed).forEach(([sensor, values]) => {
         values.forEach(({ x, y }) => {
-          const timeStr = new Date(x).toISOString();
+          const timeStr = new Date(x).toLocaleString("sv-SE", {
+            timeZone: "Asia/Seoul", // KST
+          }); // Format konsisten untuk Excel
           csv += `${sensor},${timeStr},${y}\n`;
         });
       });
