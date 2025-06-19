@@ -199,7 +199,6 @@ const MultiBiosignalView: React.FC = () => {
 
             if (window.usbAPI?.saveToUSB) {
               window.usbAPI.saveToUSB(csv);
-              alert("📤 Saving to USB...");
             } else {
               alert("❌ USB save API not available.");
             }
@@ -210,7 +209,7 @@ const MultiBiosignalView: React.FC = () => {
         }}
         clearCache={clearCache}
       />
-      
+
       <StatusCards
         counts={statusCounts}
         compactView={compactView}

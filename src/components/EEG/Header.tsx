@@ -46,7 +46,6 @@ const Header: React.FC<HeaderProps> = ({
       if (window.usbAPI?.saveToUSB) {
         window.usbAPI.saveToUSB(csv);
         alert("📤 Saving to USB...");
-        onDownload();
       } else {
         alert("❌ usbAPI is not available.");
       }

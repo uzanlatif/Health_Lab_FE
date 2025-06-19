@@ -54,7 +54,7 @@ ipcMain.on("save-to-usb", async (_event, csvString) => {
     const targetPath = path.join(usbPath, fileName);
     fs.writeFileSync(targetPath, csvString);
 
-    dialog.showMessageBox({
+    dialog.showMessageBox(win, {
       type: "info",
       title: "Save Successful",
       message: `✅ File saved to USB:\n${targetPath}`,
