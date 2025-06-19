@@ -47,7 +47,6 @@ const Header: React.FC<HeaderProps> = ({
       // ✅ Kirim CSV ke main process Electron (simpan ke USB)
       if (window.usbAPI?.saveToUSB) {
         window.usbAPI.saveToUSB(csv);
-        alert("📤 Saving to USB...");
       } else {
         alert("❌ usbAPI is not available.");
       }
