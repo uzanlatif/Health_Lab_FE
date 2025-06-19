@@ -171,47 +171,46 @@ const MultiBiosignalView: React.FC = () => {
   return (
     <div className="space-y-6 text-gray-100">
       <Header
-  isConnected={isConnected}
-  isRecording={isRecording}
-  statusCounts={statusCounts}
-  formattedTime={formattedTime}
-  elapsedTime={elapsedTime}
-  reconnect={reconnect}
-  toggleRecording={isRecording ? stop : start}
-  onDownload={() => {
-    // Generate CSV and send to USB
-    try {
-      const raw = localStorage.getItem("recordedSensorData");
-      if (!raw) {
-        alert("❌ No recorded data found.");
-        return;
-      }
+        isConnected={isConnected}
+        isRecording={isRecording}
+        statusCounts={statusCounts}
+        formattedTime={formattedTime}
+        elapsedTime={elapsedTime}
+        reconnect={reconnect}
+        toggleRecording={isRecording ? stop : start}
+        onDownload={() => {
+          // Generate CSV and send to USB
+          try {
+            const raw = localStorage.getItem("recordedSensorData");
+            if (!raw) {
+              alert("❌ No recorded data found.");
+              return;
+            }
 
-      const parsed: Record<string, { x: string | Date; y: number }[]> = JSON.parse(raw);
-      let csv = "Sensor,Timestamp,Value\n";
+            const parsed: Record<string, { x: string | Date; y: number }[]> = JSON.parse(raw);
+            let csv = "Sensor,Timestamp,Value\n";
 
-      Object.entries(parsed).forEach(([sensor, values]) => {
-        values.forEach(({ x, y }) => {
-          const timeStr = new Date(x).toISOString();
-          csv += `${sensor},${timeStr},${y}\n`;
-        });
-      });
+            Object.entries(parsed).forEach(([sensor, values]) => {
+              values.forEach(({ x, y }) => {
+                const timeStr = new Date(x).toISOString();
+                csv += `${sensor},${timeStr},${y}\n`;
+              });
+            });
 
-      if (window.usbAPI?.saveToUSB) {
-        window.usbAPI.saveToUSB(csv);
-        alert("📤 Saving to USB...");
-      } else {
-        alert("❌ USB save API not available.");
-      }
-    } catch (err) {
-      alert("❌ Failed to save log to USB.");
-      console.error(err);
-    }
-  }}
-  clearCache={clearCache}
-/>
-
-
+            if (window.usbAPI?.saveToUSB) {
+              window.usbAPI.saveToUSB(csv);
+              alert("📤 Saving to USB...");
+            } else {
+              alert("❌ USB save API not available.");
+            }
+          } catch (err) {
+            alert("❌ Failed to save log to USB.");
+            console.error(err);
+          }
+        }}
+        clearCache={clearCache}
+      />
+      
       <StatusCards
         counts={statusCounts}
         compactView={compactView}

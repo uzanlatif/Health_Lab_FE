@@ -167,7 +167,36 @@ const EEGView: React.FC = () => {
         elapsedTime={elapsedTime}
         reconnect={reconnect}
         toggleRecording={isRecording ? stop : start}
-        onDownload={() => {}}
+        onDownload={() => {
+          // Generate CSV and send to USB
+          try {
+            const raw = localStorage.getItem("recordedSensorData");
+            if (!raw) {
+              alert("❌ No recorded data found.");
+              return;
+            }
+
+            const parsed: Record<string, { x: string | Date; y: number }[]> = JSON.parse(raw);
+            let csv = "Sensor,Timestamp,Value\n";
+
+            Object.entries(parsed).forEach(([sensor, values]) => {
+              values.forEach(({ x, y }) => {
+                const timeStr = new Date(x).toISOString();
+                csv += `${sensor},${timeStr},${y}\n`;
+              });
+            });
+
+            if (window.usbAPI?.saveToUSB) {
+              window.usbAPI.saveToUSB(csv);
+              alert("📤 Saving to USB...");
+            } else {
+              alert("❌ USB save API not available.");
+            }
+          } catch (err) {
+            alert("❌ Failed to save log to USB.");
+            console.error(err);
+          }
+        }}
         clearCache={clearCache}
       />
 

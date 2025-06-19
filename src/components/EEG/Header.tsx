@@ -24,17 +24,17 @@ const Header: React.FC<HeaderProps> = ({
   onDownload,
   clearCache,
 }) => {
-  const saveLogToFile = async () => {
+  const saveToUSB = async () => {
     try {
       const raw = localStorage.getItem("recordedSensorData");
       if (!raw) {
-        alert("No recorded data found.");
+        alert("❌ No recorded data found.");
         return;
       }
 
       const parsed: Record<string, { x: string | Date; y: number }[]> = JSON.parse(raw);
-
       let csv = "Sensor,Timestamp,Value\n";
+
       Object.entries(parsed).forEach(([sensor, values]) => {
         values.forEach(({ x, y }) => {
           const timeStr = new Date(x).toISOString();
@@ -42,25 +42,18 @@ const Header: React.FC<HeaderProps> = ({
         });
       });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-
-      const fileName = `biosignal-${Date.now()}.csv`;
-      link.href = url;
-      link.setAttribute("download", fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      alert(`✅ CSV file downloaded as: ${fileName}`);
+      // ✅ Kirim CSV ke main process Electron (simpan ke USB)
+      if (window.usbAPI?.saveToUSB) {
+        window.usbAPI.saveToUSB(csv);
+        alert("📤 Saving to USB...");
+        onDownload();
+      } else {
+        alert("❌ usbAPI is not available.");
+      }
     } catch (error) {
-      console.error("Error saving CSV:", error);
-      alert("❌ Failed to download CSV file.");
+      console.error("Error saving to USB:", error);
+      alert("❌ Failed to export data.");
     }
-
-    onDownload();
   };
 
   return (
@@ -94,8 +87,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* Record Logs Button */}
         <button
           onClick={toggleRecording}
-          className={`
-            px-4 py-2 rounded-lg flex items-center font-medium shadow-md transition-all
+          className={`px-4 py-2 rounded-lg flex items-center font-medium shadow-md transition-all
             ${
               isRecording
                 ? "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:to-yellow-700 text-white ring-1 ring-yellow-300"
@@ -116,15 +108,15 @@ const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        {/* Download Logs Button */}
+        {/* Save to USB Button */}
         <button
-          onClick={saveLogToFile}
+          onClick={saveToUSB}
           className="px-4 py-2 rounded-lg flex items-center font-medium
           bg-gradient-to-r from-green-500 to-green-600 hover:to-green-700 text-white
           ring-1 ring-green-300 shadow-md hover:shadow-lg transition-all"
         >
           <Download className="w-4 h-4 mr-2" />
-          Download Logs
+          Save to USB
         </button>
       </div>
     </div>
