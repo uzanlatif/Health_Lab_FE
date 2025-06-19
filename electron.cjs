@@ -1,7 +1,7 @@
-const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require('electron');
-const path = require('path');
-const i2c = require('i2c-bus');
-const fs = require('fs');
+const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require("electron");
+const path = require("path");
+const i2c = require("i2c-bus");
+const fs = require("fs");
 
 // ========== 🔋 Battery Reader ==========
 function readBattery() {
@@ -32,17 +32,24 @@ function readBattery() {
 // ========== 💾 Save to USB ==========
 ipcMain.on("save-to-usb", async (_event, csvString) => {
   try {
-    // 📂 Cari USB mount point (misalnya /media/pi/ atau /media/usbname)
-    const mediaPath = "/media"; // Bisa disesuaikan
-    const devices = fs.readdirSync(mediaPath);
-    const usbPath = devices.length > 0 ? path.join(mediaPath, devices[0]) : null;
+    const mediaRoot = "/media";
+    const users = fs.readdirSync(mediaRoot); // e.g., ['biopulse2']
+    let usbPath = null;
+
+    for (const user of users) {
+      const userPath = path.join(mediaRoot, user);
+      const devices = fs.readdirSync(userPath); // e.g., ['E83A-6FF2']
+      if (devices.length > 0) {
+        usbPath = path.join(userPath, devices[0]); // ✅ Example: /media/biopulse2/E83A-6FF2
+        break;
+      }
+    }
 
     if (!usbPath || !fs.existsSync(usbPath)) {
       dialog.showErrorBox("USB Not Found", "No USB device is connected or mounted.");
       return;
     }
 
-    // 📝 Simpan file
     const fileName = `biosignal-${Date.now()}.csv`;
     const targetPath = path.join(usbPath, fileName);
     fs.writeFileSync(targetPath, csvString);
@@ -67,7 +74,7 @@ ipcMain.handle("get-battery-status", async () => {
   }
 });
 
-// ========== 🪟 Create window ==========
+// ========== 🪟 Create Electron Window ==========
 let win;
 function createWindow() {
   win = new BrowserWindow({
@@ -75,17 +82,17 @@ function createWindow() {
     webPreferences: {
       contextIsolation: true,
       sandbox: false,
-      preload: path.join(__dirname, 'preload.cjs'),
+      preload: path.join(__dirname, "preload.cjs"),
     },
   });
 
-  win.loadFile(path.join(__dirname, 'dist/index.html'));
+  win.loadFile(path.join(__dirname, "dist/index.html"));
 
-  // ❌ Jangan buka DevTools di produksi
+  // Optional: Disable DevTools in production
   // win.webContents.openDevTools();
 
-  globalShortcut.register('CommandOrControl+Q', () => app.quit());
+  globalShortcut.register("CommandOrControl+Q", () => app.quit());
 }
 
 app.whenReady().then(createWindow);
-app.on('will-quit', () => globalShortcut.unregisterAll());
+app.on("will-quit", () => globalShortcut.unregisterAll());
