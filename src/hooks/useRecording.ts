@@ -16,14 +16,20 @@ export const useRecorder = () => {
   // Berhenti merekam dan simpan ke localStorage
   const stop = () => {
     setIsRecording(false);
-    localStorage.setItem("recordedSensorData", JSON.stringify(bufferRef.current));
+    localStorage.setItem(
+      "recordedSensorData",
+      JSON.stringify(bufferRef.current)
+    );
   };
 
   // Tambahkan data dari WebSocket atau sensor lainnya
   const addData = (incoming: Record<string, number>) => {
     if (!isRecording) return;
 
-    const now = new Date().toISOString();
+    const now = new Date().toLocaleString("sv-SE", {
+      timeZone: "Asia/Seoul", // KST
+    }); // format: YYYY-MM-DD HH:mm:ss
+
     const buf = bufferRef.current;
 
     Object.entries(incoming).forEach(([sensor, value]) => {
