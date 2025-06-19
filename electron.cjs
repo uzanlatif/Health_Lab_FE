@@ -60,11 +60,12 @@ ipcMain.on("save-to-usb", async (_event, csvString) => {
     }
 
     const now = new Date();
-    const timestamp = now
-      .toISOString()
-      .replace(/[:.]/g, "-")
-      .replace("T", "_")
-      .split("Z")[0];
+    const pad = (n) => String(n).padStart(2, "0");
+    const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(
+      now.getDate()
+    )}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(
+      now.getSeconds()
+    )}`;
     const fileName = `biosignal-${timestamp}.csv`;
 
     const targetPath = path.join(usbPath, fileName);
