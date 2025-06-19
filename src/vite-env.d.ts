@@ -9,4 +9,8 @@ interface Window {
       error?: string;
     }>;
   };
+
+  usbAPI?: {
+    saveToUSB: (csvString: string) => void;
+  };
 }

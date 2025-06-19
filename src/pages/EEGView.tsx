@@ -18,6 +18,7 @@ const EEGView: React.FC = () => {
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const stopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
   const { isRecording, start, stop, clear: clearCache, addData } = useRecorder();
@@ -31,15 +32,22 @@ const EEGView: React.FC = () => {
   const dataBufferRef = useRef<Record<string, { x: Date; y: number }[]>>({});
   const MAX_BUFFER_SIZE = { "1h": 3600, "6h": 3600 * 6, "24h": 3600 * 24 };
 
-  // ⏱ Timer saat recording
+  // ⏱ Timer saat recording (auto stop 30 menit)
   useEffect(() => {
     if (!isRecording) {
       clearInterval(timerRef.current!);
+      clearTimeout(stopTimeoutRef.current!);
       setElapsedTime("00:00:00");
       return;
     }
 
     startTimeRef.current = new Date();
+
+    stopTimeoutRef.current = setTimeout(() => {
+      stop();
+      alert("⏱️ Recording auto-stopped after 30 minutes.");
+    }, 1800000); // 30 * 60 * 1000
+
     timerRef.current = setInterval(() => {
       const now = new Date();
       const elapsed = Math.floor((now.getTime() - startTimeRef.current!.getTime()) / 1000);
@@ -49,14 +57,24 @@ const EEGView: React.FC = () => {
       setElapsedTime(`${hh}:${mm}:${ss}`);
     }, 1000);
 
-    return () => clearInterval(timerRef.current!);
+    return () => {
+      clearInterval(timerRef.current!);
+      clearTimeout(stopTimeoutRef.current!);
+    };
   }, [isRecording]);
+
+  // Cleanup saat komponen unmount
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current!);
+      clearTimeout(stopTimeoutRef.current!);
+    };
+  }, []);
 
   // 📡 Proses data dari WebSocket dan buffer
   useEffect(() => {
     if (!sensorData) return;
 
-    // Rekam 1 sample terakhir
     addData(
       Object.fromEntries(
         Object.entries(sensorData).map(([key, val]) => [key, val[val.length - 1]?.y ?? 0])
@@ -78,7 +96,6 @@ const EEGView: React.FC = () => {
     }
   }, [sensorData, selectedSensors, timeRange, isRecording]);
 
-  // 🔧 Data untuk chart
   const processedData = useMemo(() => {
     const selected: Record<string, { x: Date; y: number }[]> = {};
     for (const name of selectedSensors) {

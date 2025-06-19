@@ -1,7 +1,9 @@
-const { app, BrowserWindow, ipcMain, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, globalShortcut, dialog } = require('electron');
 const path = require('path');
 const i2c = require('i2c-bus');
+const fs = require('fs');
 
+// ========== 🔋 Battery Reader ==========
 function readBattery() {
   const bus = i2c.openSync(1);
   const addr = 0x36;
@@ -14,7 +16,7 @@ function readBattery() {
   const voltageRaw = readWord(0x02);
   const capacityRaw = readWord(0x04);
 
-  const voltage = voltageRaw * 1.25 / 1000 / 16;
+  const voltage = (voltageRaw * 1.25) / 1000 / 16;
   const capacity = capacityRaw / 256;
   let status = "Unknown";
 
@@ -27,7 +29,37 @@ function readBattery() {
   return { voltage, capacity, status };
 }
 
-ipcMain.handle('get-battery-status', async () => {
+// ========== 💾 Save to USB ==========
+ipcMain.on("save-to-usb", async (_event, csvString) => {
+  try {
+    // 📂 Cari USB mount point (misalnya /media/pi/ atau /media/usbname)
+    const mediaPath = "/media"; // Bisa disesuaikan
+    const devices = fs.readdirSync(mediaPath);
+    const usbPath = devices.length > 0 ? path.join(mediaPath, devices[0]) : null;
+
+    if (!usbPath || !fs.existsSync(usbPath)) {
+      dialog.showErrorBox("USB Not Found", "No USB device is connected or mounted.");
+      return;
+    }
+
+    // 📝 Simpan file
+    const fileName = `biosignal-${Date.now()}.csv`;
+    const targetPath = path.join(usbPath, fileName);
+    fs.writeFileSync(targetPath, csvString);
+
+    dialog.showMessageBox({
+      type: "info",
+      title: "Save Successful",
+      message: `✅ File saved to USB:\n${targetPath}`,
+    });
+  } catch (error) {
+    console.error("Error saving to USB:", error);
+    dialog.showErrorBox("Save Failed", "❌ Failed to save data to USB device.");
+  }
+});
+
+// ========== 🔋 Handle battery status ==========
+ipcMain.handle("get-battery-status", async () => {
   try {
     return readBattery();
   } catch (e) {
@@ -35,10 +67,11 @@ ipcMain.handle('get-battery-status', async () => {
   }
 });
 
+// ========== 🪟 Create window ==========
 let win;
 function createWindow() {
   win = new BrowserWindow({
-    fullscreen: true, // ✅ Enable fullscreen
+    fullscreen: true,
     webPreferences: {
       contextIsolation: true,
       sandbox: false,
@@ -48,14 +81,10 @@ function createWindow() {
 
   win.loadFile(path.join(__dirname, 'dist/index.html'));
 
-  // win.webContents.openDevTools(); // ❌ Disabled DevTools
+  // ❌ Jangan buka DevTools di produksi
+  // win.webContents.openDevTools();
 
   globalShortcut.register('CommandOrControl+Q', () => app.quit());
-
-  // ❌ Optionally remove DevTools shortcut too
-  // globalShortcut.register('CommandOrControl+Shift+I', () =>
-  //   win.webContents.openDevTools({ mode: 'detach' })
-  // );
 }
 
 app.whenReady().then(createWindow);

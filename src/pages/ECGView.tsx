@@ -16,7 +16,9 @@ const ECGView: React.FC = () => {
   const [notchEnabledSensors, setNotchEnabledSensors] = useState<Record<string, boolean>>({});
   const [compactView, setCompactView] = useState(true);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const stopTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
   const { isRecording, start, stop, clear: clearCache, addData } = useRecorder();
@@ -53,15 +55,22 @@ const ECGView: React.FC = () => {
     }
   }, [sensorData, selectedSensors, timeRange, isRecording]);
 
-  // ⏱ Timer logic
+  // ⏱ Timer + auto-stop after 30 minutes
   useEffect(() => {
     if (!isRecording) {
       clearInterval(timerRef.current!);
+      clearTimeout(stopTimeoutRef.current!);
       setElapsedTime("00:00:00");
       return;
     }
 
     startTimeRef.current = new Date();
+
+    stopTimeoutRef.current = setTimeout(() => {
+      stop();
+      alert("⏱️ Recording auto-stopped after 30 minutes.");
+    }, 1800000); // 30 minutes = 30 * 60 * 1000
+
     timerRef.current = setInterval(() => {
       const now = new Date();
       const elapsed = Math.floor((now.getTime() - startTimeRef.current!.getTime()) / 1000);
@@ -71,8 +80,18 @@ const ECGView: React.FC = () => {
       setElapsedTime(`${hh}:${mm}:${ss}`);
     }, 1000);
 
-    return () => clearInterval(timerRef.current!);
+    return () => {
+      clearInterval(timerRef.current!);
+      clearTimeout(stopTimeoutRef.current!);
+    };
   }, [isRecording]);
+
+  useEffect(() => {
+    return () => {
+      clearInterval(timerRef.current!);
+      clearTimeout(stopTimeoutRef.current!);
+    };
+  }, []);
 
   const processedData = useMemo(() => {
     const selected: Record<string, { x: Date; y: number }[]> = {};
