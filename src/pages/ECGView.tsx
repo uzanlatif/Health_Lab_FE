@@ -79,7 +79,7 @@ const ECGView: React.FC = () => {
       const ss = String(elapsed % 60).padStart(2, "0");
       setElapsedTime(`${hh}:${mm}:${ss}`);
     }, 1000);
-
+    //test
     return () => {
       clearInterval(timerRef.current!);
       clearTimeout(stopTimeoutRef.current!);
