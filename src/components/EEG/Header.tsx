@@ -38,13 +38,12 @@ const Header: React.FC<HeaderProps> = ({
       Object.entries(parsed).forEach(([sensor, values]) => {
         values.forEach(({ x, y }) => {
           const timeStr = new Date(x).toLocaleString("sv-SE", {
-            timeZone: "Asia/Seoul", // KST
-          }); // Format konsisten untuk Excel
+            timeZone: "Asia/Seoul",
+          });
           csv += `${sensor},${timeStr},${y}\n`;
         });
       });
 
-      // ✅ Kirim CSV ke main process Electron (simpan ke USB)
       if (window.usbAPI?.saveToUSB) {
         window.usbAPI.saveToUSB(csv);
       } else {
@@ -53,6 +52,16 @@ const Header: React.FC<HeaderProps> = ({
     } catch (error) {
       console.error("Error saving to USB:", error);
       alert("❌ Failed to export data.");
+    }
+  };
+
+  const handleToggleRecording = async () => {
+    if (isRecording) {
+      toggleRecording();     // Stop recording
+      await saveToUSB();     // Auto-download
+      clearCache();          // Auto-clear cache
+    } else {
+      toggleRecording();     // Start recording
     }
   };
 
@@ -73,20 +82,9 @@ const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="flex items-center mt-4 md:mt-0 space-x-2">
-        {/* Clear Cache Button */}
-        <button
-          onClick={clearCache}
-          className="px-4 py-2 rounded-lg flex items-center font-medium
-          bg-gray-700 hover:bg-gray-600 text-white
-          ring-1 ring-gray-500 shadow-md hover:shadow-lg transition-all"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Clear Cache
-        </button>
-
         {/* Record Logs Button */}
         <button
-          onClick={toggleRecording}
+          onClick={handleToggleRecording}
           className={`px-4 py-2 rounded-lg flex items-center font-medium shadow-md transition-all
             ${
               isRecording
@@ -108,7 +106,8 @@ const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        {/* Save to USB Button */}
+        {/* Manual Save to USB Button (disabled/commented) */}
+        {/*
         <button
           onClick={saveToUSB}
           className="px-4 py-2 rounded-lg flex items-center font-medium
@@ -118,6 +117,20 @@ const Header: React.FC<HeaderProps> = ({
           <Download className="w-4 h-4 mr-2" />
           Save to USB
         </button>
+        */}
+
+        {/* Manual Clear Cache Button (disabled/commented) */}
+        {/*
+        <button
+          onClick={clearCache}
+          className="px-4 py-2 rounded-lg flex items-center font-medium
+          bg-gray-700 hover:bg-gray-600 text-white
+          ring-1 ring-gray-500 shadow-md hover:shadow-lg transition-all"
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Clear Cache
+        </button>
+        */}
       </div>
     </div>
   );
