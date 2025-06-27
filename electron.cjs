@@ -10,22 +10,28 @@ const i2c = require("i2c-bus");
 const fs = require("fs");
 
 // ========== 🔋 Battery Reader ==========
+// Reads voltage and estimates capacity based on voltage
 function readBattery() {
   const bus = i2c.openSync(1);
   const addr = 0x36;
 
   const readWord = (reg) => {
     const raw = bus.readWordSync(addr, reg);
-    return ((raw << 8) & 0xff00) | ((raw >> 8) & 0x00ff);
+    return ((raw << 8) & 0xff00) | ((raw >> 8) & 0x00ff); // Swap byte order
   };
 
   const voltageRaw = readWord(0x02);
-  const capacityRaw = readWord(0x04);
+  const voltage = (voltageRaw * 1.25) / 1000 / 16; // Convert to volts
 
-  const voltage = (voltageRaw * 1.25) / 1000 / 16;
-  const capacity = capacityRaw / 256;
+  // Estimate capacity percentage based on voltage range (3.3V = 0%, 4.2V = 100%)
+  const minVoltage = 3.3;
+  const maxVoltage = 4.2;
+  let capacity = ((voltage - minVoltage) / (maxVoltage - minVoltage)) * 100;
+  capacity = Math.min(100, Math.max(0, capacity)); // Clamp between 0–100
+  capacity = Math.round(capacity); // Optional: round to nearest integer
+
+  // Determine battery status
   let status = "Unknown";
-
   if (voltage >= 4.2) status = "Full";
   else if (voltage >= 3.7) status = "High";
   else if (voltage >= 3.55) status = "Medium";

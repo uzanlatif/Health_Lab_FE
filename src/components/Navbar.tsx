@@ -6,7 +6,6 @@ import {
   BatteryWarning,
   Network,
 } from 'lucide-react';
-import MetaLogo from '../assets/meta_logo-2-removebg-preview.png';
 import { Capacitor } from '@capacitor/core';
 import { useWebSocketConfig } from '../context/WebSocketConfigContext';
 
