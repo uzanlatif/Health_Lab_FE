@@ -1,5 +1,5 @@
 import React from "react";
-import { Play, StopCircle, Download, Trash2 } from "lucide-react";
+import { Play, StopCircle } from "lucide-react";
 
 interface HeaderProps {
   isConnected: boolean;
@@ -57,22 +57,22 @@ const Header: React.FC<HeaderProps> = ({
 
   const handleToggleRecording = async () => {
     if (isRecording) {
-      toggleRecording();     // Stop recording
-      await saveToUSB();     // Auto-download
-      clearCache();          // Auto-clear cache
+      toggleRecording(); // Stop recording
+      await saveToUSB(); // Auto download
+      clearCache();      // Then clear cache
     } else {
-      toggleRecording();     // Start recording
+      toggleRecording(); // Start recording
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between">
+    <div className="flex flex-col md:flex-row md:items-center justify-between px-4 py-3">
       <div>
-        <h1 className="text-2xl font-bold text-white">ECG Monitor</h1>
-        <p className="text-gray-300">
+        <h1 className="text-3xl font-bold text-white">ECG Monitor</h1>
+        <p className="text-lg text-gray-300 mt-1">
           Monitoring {statusCounts.all} health sensors | Last updated: {formattedTime}
           <span
-            className={`ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            className={`ml-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
               isConnected ? "bg-green-900 text-green-200" : "bg-red-900 text-red-200"
             }`}
           >
@@ -81,11 +81,10 @@ const Header: React.FC<HeaderProps> = ({
         </p>
       </div>
 
-      <div className="flex items-center mt-4 md:mt-0 space-x-2">
-        {/* Record Logs Button */}
+      <div className="flex items-center mt-4 md:mt-0 space-x-3">
         <button
           onClick={handleToggleRecording}
-          className={`px-4 py-2 rounded-lg flex items-center font-medium shadow-md transition-all
+          className={`px-5 py-2.5 rounded-lg flex items-center font-semibold shadow-md transition-all text-base
             ${
               isRecording
                 ? "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:to-yellow-700 text-white ring-1 ring-yellow-300"
@@ -95,42 +94,16 @@ const Header: React.FC<HeaderProps> = ({
         >
           {isRecording ? (
             <>
-              <StopCircle className="w-4 h-4 mr-2" />
+              <StopCircle className="w-5 h-5 mr-2" />
               Stop Recording
             </>
           ) : (
             <>
-              <Play className="w-4 h-4 mr-2" />
+              <Play className="w-5 h-5 mr-2" />
               Record Logs
             </>
           )}
         </button>
-
-        {/* Save to USB Button (Manual - Disabled) */}
-        {/*
-        <button
-          onClick={saveToUSB}
-          className="px-4 py-2 rounded-lg flex items-center font-medium
-          bg-gradient-to-r from-green-500 to-green-600 hover:to-green-700 text-white
-          ring-1 ring-green-300 shadow-md hover:shadow-lg transition-all"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Save to USB
-        </button>
-        */}
-
-        {/* Clear Cache Button (Manual - Disabled) */}
-        {/*
-        <button
-          onClick={clearCache}
-          className="px-4 py-2 rounded-lg flex items-center font-medium
-          bg-gray-700 hover:bg-gray-600 text-white
-          ring-1 ring-gray-500 shadow-md hover:shadow-lg transition-all"
-        >
-          <Trash2 className="w-4 h-4 mr-2" />
-          Clear Cache
-        </button>
-        */}
       </div>
     </div>
   );

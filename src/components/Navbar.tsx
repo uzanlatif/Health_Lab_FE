@@ -84,12 +84,12 @@ const Navbar: React.FC = () => {
     >
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center">
-          <img
+          {/* <img
             src={MetaLogo}
             alt="Logo"
             className="mr-3 max-h-10"
             style={{ height: 'auto', width: 'auto', padding: 8 }}
-          />
+          /> */}
         </div>
 
         <div className="flex items-center space-x-4">

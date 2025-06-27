@@ -18,7 +18,7 @@ const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
   const [loadingItem, setLoadingItem] = useState<string | null>(null);
-  const [disableNav, setDisableNav] = useState(false); // ⛔ Blokir klik
+  const [disableNav, setDisableNav] = useState(false);
 
   const { ip } = useWebSocketConfig();
   const port = import.meta.env.VITE_PORT_CONTROL;
@@ -38,11 +38,11 @@ const Sidebar: React.FC = () => {
   ];
 
   const runAndNavigate = async (item: (typeof navItems)[0]) => {
-    if (!API_URL || disableNav) return; // Blokir klik saat loading
+    if (!API_URL || disableNav) return;
 
     setLoadingItem(item.script);
     setDisableNav(true);
-    navigate(item.path); // ⏩ Navigasi instan
+    navigate(item.path);
 
     try {
       await axios.post(`${API_URL}/run`, { script_name: item.script });
@@ -52,7 +52,6 @@ const Sidebar: React.FC = () => {
       console.error(err);
     }
 
-    // ⏱️ Tunggu 5 detik sebelum izinkan navigasi lagi
     setTimeout(() => {
       setDisableNav(false);
       setLoadingItem(null);
@@ -80,7 +79,7 @@ const Sidebar: React.FC = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="text-gray-400 hover:text-white"
         >
-          {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {isCollapsed ? <ChevronRight size={24} /> : <ChevronLeft size={24} />}
         </button>
       </div>
 
@@ -94,7 +93,7 @@ const Sidebar: React.FC = () => {
             <div
               key={index}
               onClick={() => runAndNavigate(item)}
-              className={`flex items-center justify-between px-4 py-3 text-sm font-medium cursor-pointer transition-colors ${
+              className={`flex items-center justify-between px-4 py-4 text-base font-medium cursor-pointer transition-colors ${
                 isActive
                   ? "bg-blue-600 text-white"
                   : "text-gray-300 hover:bg-gray-800 hover:text-white"
@@ -102,14 +101,14 @@ const Sidebar: React.FC = () => {
             >
               <div className="flex items-center">
                 <item.icon
-                  className={`mr-3 h-5 w-5 ${
+                  className={`mr-4 h-7 w-7 ${
                     isActive ? "text-white" : "text-gray-400"
                   }`}
                 />
                 {!isCollapsed && <span>{item.label}</span>}
               </div>
               {!isCollapsed && isLoading && (
-                <Loader2 className="animate-spin w-4 h-4 text-white" />
+                <Loader2 className="animate-spin w-5 h-5 text-white" />
               )}
             </div>
           );
